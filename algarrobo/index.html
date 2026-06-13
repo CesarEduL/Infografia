@@ -6,19 +6,28 @@
   <title>Algarrobo en crisis — Perú</title>
   <style>
     html, body { height: 100%; }
-    body { background: #000; margin: 0; padding: 16px; box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column; }
+    body {
+      background: #000;
+      margin: 0;
+      padding: 16px;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      box-sizing: border-box;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
   </style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.lh{background:#000;color:#ccc;font-family:var(--font-sans);flex:1;min-height:600px;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;position:relative}
-.lh-header{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #222;z-index:10;flex-shrink:0}
+.lh{background:#000;color:#ccc;font-family:system-ui,-apple-system,sans-serif;flex:1;min-height:600px;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;position:relative}
+.lh-header{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #222;z-index:10;flex-shrink:0;position:relative;min-height:36px}
 .nav-links a{font-size:9px;color:#fff;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;font-weight:500}
-.lh-title{font-size:13px;font-weight:500;color:#fff;letter-spacing:0.07em;text-transform:uppercase;position:absolute;left:50%;transform:translateX(-50%)}
-.close-btn{margin-left:auto;color:#555;cursor:pointer;font-size:13px;padding:0 4px}
-.lh-body{flex:1;display:flex;overflow:hidden;min-height:0}
-.map-area{flex:1;position:relative;overflow:hidden;cursor:grab}
+.lh-title{font-size:13px;font-weight:500;color:#fff;letter-spacing:0.07em;text-transform:uppercase;position:absolute;left:50%;transform:translateX(-50%);text-align:center;max-width:calc(100% - 80px);line-height:1.3}
+.close-btn{margin-left:auto;color:#555;cursor:pointer;font-size:13px;padding:0 4px;z-index:1}
+.lh-body{flex:1;display:flex;overflow:hidden;min-height:0;min-width:0}
+.map-area{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
 .map-area:active{cursor:grabbing}
-#mapSvg{width:100%;height:100%}
+#mapSvg{width:100%;height:100%;display:block}
 .zoom-btns{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:15}
 .zoom-btn{width:24px;height:24px;background:rgba(20,20,20,0.9);border:1px solid #333;color:#aaa;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;transition:color 0.2s,border-color 0.2s}
 .zoom-btn:hover{color:#fff;border-color:#666}
@@ -37,18 +46,35 @@
 .tooltip-box{position:absolute;background:rgba(4,4,4,0.95);border:1px solid #333;padding:9px 11px;max-width:210px;font-size:10px;color:#bbb;line-height:1.6;pointer-events:none;z-index:20;display:none;bottom:108px;left:12px}
 .tooltip-box::after{content:'';position:absolute;bottom:-7px;left:18px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #333}
 .tip-year{font-size:12px;color:#fff;font-weight:600;margin-bottom:4px}
-.tl-wrap{border-top:1px solid #222;background:#060606;padding:8px 14px 10px;flex-shrink:0}
-.tl-years-row{position:relative;height:16px;margin-bottom:4px;overflow:hidden}
+.tl-wrap{border-top:1px solid #222;background:#060606;padding:8px 14px 10px;flex-shrink:0;min-width:0;width:100%}
+.mobile-era-bar{display:none}
+.stats-toggle{display:none}
+.lh-panel{flex:1;display:flex;min-height:0;overflow:hidden}
+.tl-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  width:100%;
+  min-width:0;
+  touch-action:pan-x;
+  overscroll-behavior-x:contain
+}
+.tl-scroll::-webkit-scrollbar{display:none}
+.tl-inner{min-width:0}
+.tl-years-row{position:relative;height:16px;margin-bottom:4px;overflow:visible}
 .tl-year-mark{position:absolute;font-size:9px;color:#999;top:0;letter-spacing:0.05em;white-space:nowrap;font-weight:500}
-.tl-year-mark.anchor-left{transform:translateX(-50%)}
+.tl-year-mark.anchor-left{transform:translateX(0)}
+.tl-year-mark.anchor-center{transform:translateX(-50%)}
 .tl-year-mark.anchor-right{transform:translateX(-100%)}
 .tl-dots-row{display:flex;align-items:center;height:10px;margin-bottom:5px}
 .tl-seg{flex:1;height:1px;background:#2a2a2a}
-.tl-dot{width:7px;height:7px;border-radius:50%;background:#1a1a1a;border:1px solid #444;flex-shrink:0;cursor:pointer;transition:all 0.2s}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:#1a1a1a;border:1px solid #444;flex-shrink:0;cursor:pointer;transition:all 0.2s;position:relative}
+.tl-dot::before{content:'';position:absolute;inset:-10px}
 .tl-dot:hover{background:#666;border-color:#888}
 .tl-dot.active{background:#bbb;border-color:#ddd;box-shadow:0 0 5px rgba(220,220,220,0.3)}
 .tl-periods-row{display:flex}
-.tl-era{flex:1;cursor:pointer;padding:0 3px}
+.tl-era{flex:1;cursor:pointer;padding:0 3px;min-width:0}
 .tl-era-name{font-size:9px;color:#555;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;line-height:1.2;font-weight:500}
 .tl-era-years{font-size:8px;color:#444;letter-spacing:0.04em;margin-top:1px}
 .tl-era.active .tl-era-name{color:#ddd;font-weight:600}
@@ -57,13 +83,162 @@
 .tl-era:hover .tl-era-years{color:#666}
 
 /* ── LEYENDA compacta en 2 filas limpias ── */
-.legend-area{position:absolute;bottom:8px;left:10px;display:flex;flex-direction:column;gap:4px}
+.legend-area{position:absolute;bottom:8px;left:10px;right:48px;display:flex;flex-direction:column;gap:4px;z-index:12;pointer-events:none}
 .legend-row{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
 .leg-sep{width:1px;height:12px;background:#333;flex-shrink:0}
 .leg-item{display:flex;align-items:center;gap:3px;font-size:8.5px;color:#999;letter-spacing:0.05em;text-transform:uppercase;font-weight:500;white-space:nowrap}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .leg-sq{width:7px;height:5px;border-radius:1px;flex-shrink:0}
 .leg-lbl{font-size:8px;color:#666;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;margin-right:2px;white-space:nowrap}
+@media (max-width: 768px) {
+  body{padding:0;padding-top:env(safe-area-inset-top);padding-bottom:0;overflow:hidden}
+  .lh{
+    border-radius:0;
+    height:100dvh;
+    max-height:100dvh;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden
+  }
+  .lh-header{padding:8px 12px;justify-content:center;min-height:40px;flex-shrink:0}
+  .nav-links,.close-btn{display:none}
+  .lh-title{position:static;transform:none;font-size:11px;max-width:100%;letter-spacing:0.05em}
+  .lh-body{flex:1;min-height:0;min-width:0}
+  .lh-panel{flex:1;min-height:0;min-width:0;flex-direction:column}
+  .map-area{
+    flex:1;
+    width:100%;
+    height:auto;
+    min-height:0
+  }
+  .zoom-btns{top:8px;right:8px;gap:6px}
+  .zoom-btn{width:40px;height:40px;font-size:20px;border-radius:6px}
+  .legend-area{
+    bottom:4px;left:4px;right:72px;
+    background:rgba(0,0,0,0.85);
+    padding:4px 6px;
+    border-radius:4px;
+    border:1px solid #222;
+    max-height:20%;
+    overflow:hidden
+  }
+  .legend-area .legend-row:last-child{display:none}
+  .legend-row{flex-wrap:wrap;gap:3px 6px}
+  .leg-item{font-size:6.5px;gap:2px}
+  .leg-lbl{font-size:6.5px}
+  .leg-sep{display:none}
+  .tooltip-box{
+    bottom:auto;top:8px;left:8px;right:8px;max-width:none;
+    font-size:11px;padding:10px 12px
+  }
+  .tooltip-box::after{display:none}
+  .tip-year{font-size:13px}
+  .stats-toggle{
+    display:flex;
+    position:absolute;
+    bottom:8px;
+    right:8px;
+    z-index:16;
+    align-items:center;
+    justify-content:center;
+    min-width:44px;
+    height:32px;
+    padding:0 10px;
+    background:rgba(20,20,20,0.92);
+    border:1px solid #333;
+    border-radius:6px;
+    color:#aaa;
+    font-size:9px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    font-family:inherit
+  }
+  .stats-toggle[aria-expanded="true"]{color:#6dbf87;border-color:#3a5a40}
+  .sidebar{
+    display:none;
+    position:fixed;
+    inset:auto 0 0 0;
+    z-index:40;
+    width:100%;
+    max-height:min(70dvh,520px);
+    border-left:none;
+    border-top:1px solid #333;
+    padding:14px 14px max(14px,env(safe-area-inset-bottom));
+    gap:10px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:#0a0a0a;
+    box-shadow:0 -8px 32px rgba(0,0,0,0.6);
+    grid-template-columns:1fr 1fr
+  }
+  .sidebar.open{display:grid}
+  .sidebar-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:35;
+    background:rgba(0,0,0,0.55)
+  }
+  .sidebar-backdrop.open{display:block}
+  .sidebar>.sidebar-chart{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:6px 12px;
+    align-items:center
+  }
+  .sidebar>.sidebar-chart .s-label{grid-column:1/-1;margin-bottom:0}
+  .sidebar>.sidebar-chart .pie-wrap{grid-column:1}
+  .sidebar>.sidebar-chart .clan-grid{grid-column:2;margin-top:0;grid-template-columns:1fr 1fr}
+  .sidebar .stat-block{padding-top:8px;border-top:1px solid #222}
+  .sidebar .stat-block:last-child{grid-column:1/-1}
+  .stat-val{font-size:14px}
+  .stat-lbl,.stat-side-note{font-size:9px}
+  .mobile-era-bar{display:none}
+  .mobile-era-bar.has-era{
+    display:block;
+    padding:8px 12px 6px;
+    border-bottom:1px solid #1a1a1a;
+    background:#080808
+  }
+  .mobile-era-year{font-size:12px;font-weight:600;color:#6dbf87;letter-spacing:0.03em}
+  .mobile-era-note{
+    font-size:10px;color:#888;line-height:1.45;margin-top:4px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+  }
+  .tl-wrap{
+    flex-shrink:0;
+    min-width:0;
+    width:100%;
+    margin-top:0;
+    padding:6px 0 max(10px,env(safe-area-inset-bottom));
+    background:#060606
+  }
+  .tl-scroll{padding:0}
+  .tl-inner{
+    width:max-content;
+    min-width:100%;
+    padding:0 12px 2px;
+    box-sizing:border-box
+  }
+  .tl-periods-row,.tl-dots-row,.tl-years-row{width:max-content;min-width:calc(100% - 24px)}
+  .tl-era{flex:0 0 108px;width:108px;padding:0 4px}
+  .tl-dot{width:13px;height:13px}
+  .tl-dots-row{height:16px;margin-bottom:8px}
+  .tl-era-name{font-size:8.5px;line-height:1.25;white-space:normal}
+  .tl-era-years{font-size:7.5px;margin-top:2px;white-space:nowrap}
+  .tl-years-row{height:18px;margin-bottom:6px;overflow:visible}
+  .tl-year-mark{font-size:8px;letter-spacing:0}
+  .map-tooltip{max-width:min(220px,calc(100vw - 24px));font-size:11px;padding:9px 11px}
+}
+
+@media (max-width: 380px) {
+  .lh-title{font-size:10px}
+  .tl-era{flex:0 0 96px;width:96px}
+  .tl-era-name{font-size:8px}
+}
 </style>
 </head>
 <body>
@@ -74,7 +249,8 @@
     <div class="lh-title">ALGARROBO EN CRISIS — PERÚ</div>
     <div class="close-btn">✕</div>
   </div>
-  <div class="lh-body">
+  <div class="lh-panel">
+    <div class="lh-body">
     <div class="map-area" id="mapArea">
       <svg id="mapSvg"></svg>
       <div class="map-tooltip" id="mapTip"></div>
@@ -88,6 +264,7 @@
         <div id="tipBody"></div>
       </div>
 
+      <button type="button" class="stats-toggle" id="statsToggle" aria-expanded="false" aria-controls="sidebar">Datos</button>
       <div class="legend-area">
         <!-- Fila 1: zonas de afectación + ruta -->
         <div class="legend-row">
@@ -115,9 +292,10 @@
         </div>
       </div>
     </div>
+    </div>
 
-    <div class="sidebar">
-      <div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-chart">
         <div class="s-label">Norte peruano · ha perdidas</div>
         <div class="pie-wrap">
           <svg width="100" height="100" viewBox="0 0 100 100">
@@ -154,10 +332,19 @@
       </div>
     </div>
   </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
   <div class="tl-wrap">
-    <div class="tl-years-row" id="yearsRow"></div>
-    <div class="tl-dots-row" id="dotsRow"></div>
-    <div class="tl-periods-row" id="periodsRow"></div>
+    <div class="mobile-era-bar" id="mobileEraBar">
+      <div class="mobile-era-year" id="mobileEraYear"></div>
+      <div class="mobile-era-note" id="mobileEraNote"></div>
+    </div>
+    <div class="tl-scroll" id="tlScroll">
+      <div class="tl-inner">
+        <div class="tl-years-row" id="yearsRow"></div>
+        <div class="tl-dots-row" id="dotsRow"></div>
+        <div class="tl-periods-row" id="periodsRow"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -267,13 +454,46 @@ function nameMatch(props){
 function starPath(cx,cy,r,ir,pts){
   let d='';for(let i=0;i<pts*2;i++){const a=(i*Math.PI/pts)-Math.PI/2,ra=i%2===0?r:ir;d+=(i===0?'M':'L')+(cx+Math.cos(a)*ra).toFixed(2)+','+(cy+Math.sin(a)*ra).toFixed(2);}return d+'Z';
 }
+function pointerXY(e){
+  if(e.touches&&e.touches.length)return[e.touches[0].clientX,e.touches[0].clientY];
+  if(e.changedTouches&&e.changedTouches.length)return[e.changedTouches[0].clientX,e.changedTouches[0].clientY];
+  return[e.clientX,e.clientY];
+}
 function showMapTip(html,e){
   const area=document.getElementById('mapArea').getBoundingClientRect();
+  const[px,py]=pointerXY(e);
   mapTip.innerHTML=html;mapTip.style.display='block';
-  mapTip.style.left=(e.clientX-area.left+12)+'px';
-  mapTip.style.top=(e.clientY-area.top-10)+'px';
+  const tipW=mapTip.offsetWidth||180,tipH=mapTip.offsetHeight||60;
+  let left=px-area.left+12,top=py-area.top-10;
+  if(left+tipW>area.width-4)left=Math.max(4,px-area.left-tipW-8);
+  if(top+tipH>area.height-4)top=Math.max(4,py-area.top-tipH-8);
+  if(top<4)top=4;
+  mapTip.style.left=left+'px';
+  mapTip.style.top=top+'px';
 }
 function hideMapTip(){mapTip.style.display='none';}
+function highlightRegion(rk,rd,on){
+  if(!rk||!rd||!rd.note)return;
+  svg.selectAll('.region-path').filter(d=>nameMatch(d.properties)===rk).attr('fill',on?rd.hov:rd.color);
+  const lbl=svg.select(`#lbl-${rk.replace(/\s/g,'_')}`);
+  if(!lbl.empty())lbl.attr('fill',on?'#ffffff':labelDefaultColor(rd));
+}
+function onRegionOver(rk,rd,e){
+  if(!rd.note)return;
+  highlightRegion(rk,rd,true);
+  showRegionTip(rk,rd);
+}
+function onRegionOut(rk,rd){
+  if(!rd.note)return;
+  highlightRegion(rk,rd,false);
+  if(activeEra>=0)showEraTip();else clearTip();
+}
+function showRegionTip(rk,rd){
+  const sc={CRÍTICO:'#e07060',GRAVE:'#d0a040',SEVERO:'#90aa50',AMAZÓNICO:'#60aa80',TRÁFICO:'#8080cc',DESTINO:'#9090cc'}[rd.status]||'#aaa';
+  const tip=document.getElementById('tipBox');tip.style.display='block';
+  document.getElementById('tipTitle').textContent=rk||'';
+  document.getElementById('tipBody').innerHTML=`<span style="color:${sc};font-size:9px;letter-spacing:0.09em;font-weight:600">${rd.status}</span><br>${rd.loss!=='—'?'<strong style="color:#ddd">'+rd.loss+'</strong><br>':''}${rd.rate!=='—'?rd.rate+'<br>':''}${rd.note}`;
+}
 
 // Dibujar estrellas en leyenda HTML
 function buildLegendStars(){
@@ -315,18 +535,14 @@ function render(){
   });
   allFeatures.forEach(f=>{
     const rk=nameMatch(f.properties),rd=rk?regionData[rk]:defaultRegion;
-    gMain.append('path').datum(f).attr('d',path).attr('fill',rd.color).attr('stroke','#1a1a1a').attr('stroke-width',0.4)
+    gMain.append('path').datum(f).attr('class','region-path').attr('d',path).attr('fill',rd.color).attr('stroke','#1a1a1a').attr('stroke-width',0.4)
       .style('cursor',rd.note?'pointer':'default')
-      .on('mouseenter',function(){
+      .on('mouseenter',function(e){onRegionOver(rk,rd,e);})
+      .on('mouseleave',function(){onRegionOut(rk,rd);})
+      .on('click',function(e){
         if(!rd.note)return;
-        d3.select(this).attr('fill',rd.hov);
-        if(rk)svg.select(`#lbl-${rk.replace(/\s/g,'_')}`).attr('fill','#ffffff');
-        showRegionTip(rk,rd);
-      })
-      .on('mouseleave',function(){
-        d3.select(this).attr('fill',rd.color);
-        if(rk)svg.select(`#lbl-${rk.replace(/\s/g,'_')}`).attr('fill',labelDefaultColor(rd));
-        if(activeEra>=0)showEraTip();else clearTip();
+        e.stopPropagation();
+        onRegionOver(rk,rd,e);
       });
   });
 
@@ -372,9 +588,11 @@ function render(){
       const [x,y]=xy;
       gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',6).attr('fill',n.color).attr('opacity',0.15).style('pointer-events','none');
       const dot=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',3).attr('fill',n.color).attr('opacity',0.9).attr('filter','url(#glow)').style('cursor','pointer');
-      dot.on('mouseenter',function(e){d3.select(this).attr('r',5).attr('opacity',1);showMapTip(`<b style="color:#80deea">${n.label}</b>${n.sub}`,e);})
-         .on('mousemove',function(e){showMapTip(`<b style="color:#80deea">${n.label}</b>${n.sub}`,e);})
-         .on('mouseleave',function(){d3.select(this).attr('r',3).attr('opacity',0.9);hideMapTip();});
+      const tipHtml=`<b style="color:#80deea">${n.label}</b>${n.sub}`;
+      function showNodeTip(e){d3.select(dot.node()).attr('r',5).attr('opacity',1);showMapTip(tipHtml,e);}
+      function hideNodeTip(){d3.select(dot.node()).attr('r',3).attr('opacity',0.9);hideMapTip();}
+      dot.on('mouseenter',showNodeTip).on('mousemove',showNodeTip).on('mouseleave',hideNodeTip)
+         .on('click',function(e){e.stopPropagation();showNodeTip(e);});
     });
   }
 
@@ -385,20 +603,21 @@ function render(){
       const [mx,my]=xy;
       const col=iconColor[ev.icon]||'#e03020';
       const star=gMarkers.append('path').attr('d',starPath(mx,my,5,2.2,8)).attr('fill',col).attr('opacity',0.9).attr('filter','url(#glow)').style('cursor','pointer');
-      star.on('mouseenter',function(e){d3.select(this).attr('transform',`translate(${mx},${my}) scale(1.4) translate(${-mx},${-my})`);showMapTip(`<b style="color:#ddd">${ev.label}</b>`,e);})
-          .on('mousemove',function(e){showMapTip(`<b style="color:#ddd">${ev.label}</b>`,e);})
-          .on('mouseleave',function(){d3.select(this).attr('transform',null);hideMapTip();});
+      const evTip=`<b style="color:#ddd">${ev.label}</b>`;
+      function showEvTip(e){d3.select(star.node()).attr('transform',`translate(${mx},${my}) scale(1.4) translate(${-mx},${-my})`);showMapTip(evTip,e);}
+      function hideEvTip(){d3.select(star.node()).attr('transform',null);hideMapTip();}
+      star.on('mouseenter',showEvTip).on('mousemove',showEvTip).on('mouseleave',hideEvTip)
+          .on('click',function(e){e.stopPropagation();showEvTip(e);});
     });
   }
 }
 
-function showRegionTip(rk,rd){
-  const sc={CRÍTICO:'#e07060',GRAVE:'#d0a040',SEVERO:'#90aa50',AMAZÓNICO:'#60aa80',TRÁFICO:'#8080cc',DESTINO:'#9090cc'}[rd.status]||'#aaa';
-  const tip=document.getElementById('tipBox');tip.style.display='block';
-  document.getElementById('tipTitle').textContent=rk||'';
-  document.getElementById('tipBody').innerHTML=`<span style="color:${sc};font-size:9px;letter-spacing:0.09em;font-weight:600">${rd.status}</span><br>${rd.loss!=='—'?'<strong style="color:#ddd">'+rd.loss+'</strong><br>':''}${rd.rate!=='—'?rd.rate+'<br>':''}${rd.note}`;
-}
+function isMobile(){return window.matchMedia('(max-width:768px)').matches;}
 function showEraTip(){
+  if(isMobile()){
+    document.getElementById('tipBox').style.display='none';
+    return;
+  }
   const era=eras[activeEra];const tip=document.getElementById('tipBox');tip.style.display='block';
   document.getElementById('tipTitle').textContent=era.years;
   document.getElementById('tipBody').textContent=era.note;
@@ -407,6 +626,42 @@ function clearTip(){
   document.getElementById('tipBox').style.display='none';
   document.getElementById('sideYear').textContent='—';
   document.getElementById('sideNote').textContent='Selecciona un período en el timeline para ver detalles.';
+  updateMobileEraBar();
+}
+function updateMobileEraBar(){
+  const bar=document.getElementById('mobileEraBar');
+  const yearEl=document.getElementById('mobileEraYear');
+  const noteEl=document.getElementById('mobileEraNote');
+  if(!bar||!yearEl||!noteEl)return;
+  if(activeEra<0){
+    bar.classList.remove('has-era');
+    yearEl.textContent='';
+    noteEl.textContent='';
+    return;
+  }
+  const era=eras[activeEra];
+  bar.classList.add('has-era');
+  yearEl.textContent=era.years;
+  noteEl.textContent=era.note;
+}
+function setStatsOpen(open){
+  const sidebar=document.getElementById('sidebar');
+  const backdrop=document.getElementById('sidebarBackdrop');
+  const toggle=document.getElementById('statsToggle');
+  if(!sidebar||!toggle)return;
+  sidebar.classList.toggle('open',open);
+  if(backdrop)backdrop.classList.toggle('open',open);
+  toggle.setAttribute('aria-expanded',open?'true':'false');
+}
+document.getElementById('statsToggle')?.addEventListener('click',()=>{
+  const sidebar=document.getElementById('sidebar');
+  setStatsOpen(!sidebar?.classList.contains('open'));
+});
+document.getElementById('sidebarBackdrop')?.addEventListener('click',()=>setStatsOpen(false));
+const tlScrollEl=document.getElementById('tlScroll');
+if(tlScrollEl){
+  tlScrollEl.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  tlScrollEl.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
 }
 
 d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
@@ -414,7 +669,8 @@ d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json'
   allFeatures=topojson.feature(topo,topo.objects[key]).features;
   render();
   buildLegendStars();
-  window.addEventListener('resize',()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);render();});
+  window.addEventListener('resize',()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);render();layoutYearMarks();});
+  window.addEventListener('orientationchange',()=>{setTimeout(()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);render();layoutYearMarks();},200);});
 }).catch(()=>{document.getElementById('mapArea').innerHTML='<div style="color:#666;padding:20px">Error cargando mapa</div>';});
 
 function buildTL(){
@@ -428,23 +684,56 @@ function buildTL(){
     ep.onclick=()=>selectEra(i);pr.appendChild(ep);
   });
   if(activeEra<0)return;
-  const era=eras[activeEra],isLast=(activeEra===eras.length-1);
-  era.subYears.forEach((y,i)=>{
+  const era=eras[activeEra];
+  era.subYears.forEach(y=>{
     const sp=document.createElement('span');sp.className='tl-year-mark';
-    const base=activeEra/(eras.length-1)*100,w=100/(eras.length-1);
-    let pct=base-w*0.5+(i/(era.subYears.length-1))*w;
-    pct=Math.max(1,Math.min(99,pct));
-    sp.style.left=pct+'%';
-    sp.classList.add(isLast?'anchor-right':'anchor-left');
     sp.textContent=y;yr.appendChild(sp);
   });
+  requestAnimationFrame(layoutYearMarks);
+}
+function layoutYearMarks(){
+  if(activeEra<0)return;
+  const yr=document.getElementById('yearsRow');
+  const pr=document.getElementById('periodsRow');
+  const eraEl=document.querySelectorAll('.tl-era')[activeEra];
+  if(!yr||!eraEl)return;
+  if(pr)yr.style.width=pr.offsetWidth+'px';
+  const rowLeft=yr.getBoundingClientRect().left;
+  const er=eraEl.getBoundingClientRect();
+  const relLeft=er.left-rowLeft;
+  const era=eras[activeEra];
+  const n=era.subYears.length;
+  const marks=yr.querySelectorAll('.tl-year-mark');
+  const inset=Math.max(2,n>=4?4:6);
+  era.subYears.forEach((_,i)=>{
+    const sp=marks[i];
+    if(!sp)return;
+    let x;
+    if(n===1)x=relLeft+er.width/2;
+    else x=relLeft+inset+(i/(n-1))*(er.width-2*inset);
+    sp.style.left=x+'px';
+    sp.className='tl-year-mark';
+    if(i===0)sp.classList.add('anchor-left');
+    else if(i===n-1)sp.classList.add('anchor-right');
+    else sp.classList.add('anchor-center');
+  });
+}
+function scrollEraIntoView(i){
+  if(!isMobile())return;
+  const scroll=document.getElementById('tlScroll');
+  const era=document.querySelectorAll('.tl-era')[i];
+  if(scroll&&era)era.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  setTimeout(layoutYearMarks,350);
 }
 function selectEra(i){
+  setStatsOpen(false);
   if(activeEra===i){activeEra=-1;buildTL();clearTip();render();return;}
   activeEra=i;buildTL();
   document.getElementById('sideYear').textContent=eras[i].years;
   document.getElementById('sideNote').textContent=eras[i].note.substring(0,90)+'…';
+  updateMobileEraBar();
   showEraTip();if(allFeatures.length)render();
+  scrollEraIntoView(i);
 }
 buildTL();
 </script>
