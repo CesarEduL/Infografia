@@ -49,15 +49,16 @@ Luego visita `http://localhost:8000/algarrobo/`.
 
 El workflow `.github/workflows/deploy-pages.yml` publica el sitio en cada push a `main`.
 
+**Secrets, entornos y configuración:** ver [DEPLOY.md](DEPLOY.md).
+
 ### Primera vez (obligatorio)
 
 Si el workflow falla con `Get Pages site failed` / `Not Found`, GitHub Pages aún no está activado. Haz esto **una vez**:
 
 1. Ve a **Settings → Pages** en el repositorio.
 2. En **Build and deployment → Source**, selecciona **GitHub Actions** (no "Deploy from a branch").
-3. Vuelve a **Actions**, abre el workflow fallido y pulsa **Re-run all jobs**.
-
-El workflow también intenta activar Pages automáticamente vía API, pero en algunos repos hace falta el paso manual anterior.
+3. (Opcional) Crea el secret `GH_PAGES_TOKEN` — ver [DEPLOY.md](DEPLOY.md).
+4. Vuelve a **Actions**, abre el workflow fallido y pulsa **Re-run all jobs**.
 
 ### Añadir carpetas al despliegue
 

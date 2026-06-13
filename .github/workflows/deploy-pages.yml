@@ -20,11 +20,16 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN || secrets.GITHUB_TOKEN }}
+      PAGES_ENABLE_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Enable GitHub Pages (workflow)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           gh api --method POST "repos/${{ github.repository }}/pages" \
             --input - <<< '{"build_type":"workflow"}' \
@@ -33,6 +38,9 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          token: ${{ secrets.GH_PAGES_TOKEN || github.token }}
+          enablement: ${{ secrets.GH_PAGES_TOKEN != '' }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -45,3 +53,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GH_PAGES_TOKEN || github.token }}

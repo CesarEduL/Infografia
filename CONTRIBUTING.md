@@ -64,8 +64,8 @@ git push origin main
 
 Añade también la carpeta nueva en `.github/workflows/deploy-pages.yml` (sección `Upload artifact → path`).
 
-El workflow de GitHub Actions despliega automáticamente en unos minutos.
+Secrets y entornos necesarios: [DEPLOY.md](DEPLOY.md).
 
 ### Si el despliegue falla
 
-Error `Get Pages site failed`: activa **Settings → Pages → Source: GitHub Actions** y reejecuta el workflow.
+Error `Get Pages site failed`: activa **Settings → Pages → Source: GitHub Actions**, crea `GH_PAGES_TOKEN` si hace falta (ver [DEPLOY.md](DEPLOY.md)) y reejecuta el workflow.
