@@ -53,12 +53,13 @@ El workflow `.github/workflows/deploy-pages.yml` publica el sitio en cada push a
 
 ### Primera vez (obligatorio)
 
-Si el workflow falla con `Get Pages site failed` / `Not Found`, GitHub Pages aún no está activado. Haz esto **una vez**:
+El `GITHUB_TOKEN` **no puede** activar Pages (error 403). Debes hacer esto **una vez**:
 
 1. Ve a **Settings → Pages** en el repositorio.
 2. En **Build and deployment → Source**, selecciona **GitHub Actions** (no "Deploy from a branch").
-3. (Opcional) Crea el secret `GH_PAGES_TOKEN` — ver [DEPLOY.md](DEPLOY.md).
-4. Vuelve a **Actions**, abre el workflow fallido y pulsa **Re-run all jobs**.
+3. Vuelve a **Actions**, abre el workflow fallido y pulsa **Re-run all jobs**.
+
+Alternativa: crea el secret `GH_PAGES_TOKEN` para que el workflow active Pages por API — ver [DEPLOY.md](DEPLOY.md).
 
 ### Añadir carpetas al despliegue
 

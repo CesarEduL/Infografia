@@ -20,16 +20,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN || secrets.GITHUB_TOKEN }}
-      PAGES_ENABLE_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Enable GitHub Pages (workflow)
+        if: ${{ secrets.GH_PAGES_TOKEN != '' }}
         env:
-          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
         run: |
           gh api --method POST "repos/${{ github.repository }}/pages" \
             --input - <<< '{"build_type":"workflow"}' \
