@@ -75,6 +75,23 @@
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .leg-sq{width:7px;height:5px;border-radius:1px;flex-shrink:0}
 .leg-lbl{font-size:8px;color:#666;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;margin-right:2px;white-space:nowrap}
+@media (min-width: 769px) {
+  html,body{height:100%;overflow:hidden}
+  body{
+    padding:0;
+    min-height:100dvh;
+    height:100dvh
+  }
+  .lh{
+    flex:1;
+    min-height:0;
+    height:100%;
+    max-height:100dvh;
+    border-radius:0
+  }
+  .close-btn{display:none}
+  .lh-title{max-width:calc(100% - 40px)}
+}
 @media (max-width: 768px) {
   body{padding:0;padding-top:env(safe-area-inset-top);padding-bottom:0;overflow:hidden}
   .lh{
