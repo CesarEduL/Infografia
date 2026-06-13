@@ -61,14 +61,6 @@ El `GITHUB_TOKEN` **no puede** activar Pages (error 403). Debes hacer esto **una
 
 Alternativa: crea el secret `GH_PAGES_TOKEN` para que el workflow active Pages por API — ver [DEPLOY.md](DEPLOY.md).
 
-### Añadir carpetas al despliegue
+### Añadir infografías
 
-Cuando crees una infografía nueva, agrégala en `.github/workflows/deploy-pages.yml` bajo `Upload artifact → path`:
-
-```yaml
-path: |
-  index.html
-  404.html
-  algarrobo
-  mi-nueva-infografia
-```
+Crea la carpeta con su `index.html` y enlázala en el `index.html` de la raíz. El workflow sube todo el repo (`path: .`), así que no hace falta tocar el workflow.

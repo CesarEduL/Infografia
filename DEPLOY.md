@@ -147,17 +147,11 @@ Opcional en **Settings → Environments → github-pages**:
 
 ---
 
-## Añadir infografías al artefacto
+## Artefacto de despliegue
 
-Edita `.github/workflows/deploy-pages.yml` en `Upload artifact → path`:
+El workflow usa `path: .` — sube la raíz del repositorio. Las carpetas nuevas de infografías se incluyen solas; no hace falta editar el workflow.
 
-```yaml
-path: |
-  index.html
-  404.html
-  algarrobo
-  mi-nueva-infografia
-```
+`.git` y `.github` se excluyen automáticamente al empaquetar.
 
 ---
 

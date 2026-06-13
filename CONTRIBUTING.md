@@ -62,9 +62,7 @@ git commit -m "Añadir infografía: mi-tema"
 git push origin main
 ```
 
-Añade también la carpeta nueva en `.github/workflows/deploy-pages.yml` (sección `Upload artifact → path`).
-
-Secrets y entornos necesarios: [DEPLOY.md](DEPLOY.md).
+No hace falta editar el workflow: despliega la raíz del repo (`path: .`). `.git` y `.github` se excluyen automáticamente.
 
 ### Si el despliegue falla
 
