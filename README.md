@@ -16,6 +16,10 @@ Colección de infografías interactivas publicadas con [GitHub Pages](https://pa
 Infografia/
 ├── index.html              # Índice con enlaces a todas las infografías
 ├── 404.html                # Página de error
+├── shared/                 # CSS y JS de animaciones compartidos
+│   ├── motion.css
+│   ├── motion.js
+│   └── d3-motion.js
 ├── algarrobo/
 │   └── index.html          # → /algarrobo
 └── otrainfografia/         # (ejemplo futuro)
