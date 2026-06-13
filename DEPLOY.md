@@ -1,8 +1,12 @@
-# Despliegue — secrets y entornos
+# Despliegue — referencia técnica
 
-Guía de configuración para publicar el sitio con GitHub Actions.
+Guía técnica de secrets, tokens y el workflow de GitHub Actions.
 
-## Resumen rápido
+**Tutorial paso a paso:** [GITHUB_PAGES.md](GITHUB_PAGES.md)
+
+---
+
+## Resumen
 
 | Nombre | ¿Obligatorio? | Dónde se define | Uso |
 |--------|---------------|-----------------|-----|
@@ -13,73 +17,37 @@ Guía de configuración para publicar el sitio con GitHub Actions.
 
 ---
 
-## Error 403: `Resource not accessible by integration`
+## `GITHUB_TOKEN` (automático)
 
-Si ves esto en el paso **Enable GitHub Pages**:
+- **No lo creas tú.** GitHub lo genera en cada ejecución.
+- Permisos del workflow (definidos en `deploy-pages.yml`):
 
+```yaml
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 ```
-gh: Resource not accessible by integration (HTTP 403)
-```
 
-**Causa:** el `GITHUB_TOKEN` que genera GitHub Actions **no puede** crear ni configurar el sitio de Pages (falta permiso de administración del repo).
-
-**Solución (elige una):**
-
-### Opción A — Manual (recomendada)
-
-1. Repo **Infografia → Settings → Pages**
-2. **Build and deployment → Source:** **GitHub Actions**
-3. **Actions → Deploy GitHub Pages → Re-run all jobs**
-
-No necesitas ningún secret extra.
-
-### Opción B — PAT en `GH_PAGES_TOKEN`
-
-Si prefieres que el workflow active Pages por API:
-
-1. Crea un PAT (ver abajo)
-2. Guárdalo como secret `GH_PAGES_TOKEN`
-3. Reejecuta el workflow
-
-El paso de enable **solo se ejecuta** si existe ese secret.
+- Sirve para **desplegar** una vez Pages está activado.
+- **No sirve** para activar Pages la primera vez (error 403).
 
 ---
 
-## Secrets del repositorio
+## `GH_PAGES_TOKEN` (opcional)
 
-### `GITHUB_TOKEN` (automático)
+PAT con permisos de administración del repositorio. Solo necesario si quieres que el workflow active Pages por API en lugar de hacerlo desde la UI.
 
-- **No lo creas tú.** GitHub lo genera en cada ejecución.
-- Permisos del workflow (ya definidos):
-  - `contents: read`
-  - `pages: write`
-  - `id-token: write`
-- Sirve para **desplegar** una vez Pages está activado.
-- **No sirve** para activar Pages la primera vez (403).
+### Crear un fine-grained token
 
-### `GH_PAGES_TOKEN` (opcional)
-
-PAT con permisos de administración del repositorio.
-
-**Cuándo usarlo:** solo si quieres que el workflow llame a la API para activar Pages. Si activaste Pages desde la UI (opción A), no hace falta.
-
-#### Cómo crearlo
-
-**Fine-grained token** (recomendado):
-
-1. GitHub → tu avatar → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**
+1. GitHub → tu avatar → **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
 2. **Repository access:** Only select repositories → `Infografia`
 3. Permisos:
    - **Administration:** Read and write
    - **Pages:** Read and write
 4. Genera y copia el token.
 
-**Classic token** (alternativa):
-
-1. **Personal access tokens → Tokens (classic) → Generate new token**
-2. Scope: **`repo`** (acceso completo al repositorio)
-
-#### Guardarlo
+### Guardarlo
 
 **Infografia → Settings → Secrets and variables → Actions → New repository secret**
 
@@ -91,7 +59,7 @@ PAT con permisos de administración del repositorio.
 
 ## Cómo lee el workflow los secrets
 
-GitHub **no permite** usar `secrets` en condiciones `if`. El workflow detecta primero si existe `GH_PAGES_TOKEN`:
+GitHub **no permite** usar `secrets` en condiciones `if:`. El workflow usa un paso intermedio:
 
 ```yaml
 - name: Detect Pages token
@@ -111,53 +79,60 @@ GitHub **no permite** usar `secrets` en condiciones `if`. El workflow detecta pr
     GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
 ```
 
-| Paso | Token usado | Condición |
-|------|-------------|-----------|
-| Detect Pages token | `secrets.GH_PAGES_TOKEN` vía `env` | Siempre |
-| Enable GitHub Pages | `secrets.GH_PAGES_TOKEN` | Solo si `present == true` |
-| Setup Pages | PAT o `github.token` | `enablement` solo si `present == true` |
+| Paso | Token | Condición |
+|------|-------|-----------|
+| Detect Pages token | vía `env` | Siempre |
+| Enable GitHub Pages | `GH_PAGES_TOKEN` | Solo si `present == true` |
+| Setup Pages | PAT o `github.token` | `enablement` solo con PAT |
 | Deploy | PAT o `github.token` | Siempre |
+
+---
+
+## Artefacto
+
+```yaml
+- uses: actions/upload-pages-artifact@v3
+  with:
+    path: .
+```
+
+- `path` debe ser un **directorio**, no una lista de archivos.
+- `.git` y `.github` se excluyen al empaquetar.
+- Las infografías nuevas se incluyen solas; no hace falta editar el workflow.
 
 ---
 
 ## Entorno `github-pages`
 
-El job declara:
-
 ```yaml
 environment:
   name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
 ```
 
-GitHub lo crea al primer despliegue correcto. No requiere secrets propios.
+GitHub lo crea al primer despliegue correcto. Opcional en **Settings → Environments → github-pages**:
 
-Opcional en **Settings → Environments → github-pages**:
-- Limitar despliegues a la rama `main`
+- Limitar despliegues a `main`
 - Añadir revisores obligatorios
 
 ---
 
-## Checklist primera publicación
+## Errores frecuentes
 
-- [ ] **Settings → Pages → Source: GitHub Actions**
-- [ ] Push a `main` o ejecutar el workflow manualmente
-- [ ] (Solo si quieres auto-enable por API) Secret `GH_PAGES_TOKEN` creado
-- [ ] Run en verde en **Actions**
-- [ ] Sitio accesible en `https://cesaredul.github.io/Infografia/`
+| Error | Causa | Solución |
+|-------|-------|----------|
+| `Get Pages site failed` / `Not Found` | Pages no activado | **Settings → Pages → GitHub Actions** |
+| `Resource not accessible by integration` (403) | `GITHUB_TOKEN` no puede activar Pages | Activar desde la UI o usar `GH_PAGES_TOKEN` |
+| `Unrecognized named-value: 'secrets'` | `secrets` en un `if:` | Usar output de paso intermedio (ya corregido) |
+| `tar: index.html\n... Cannot open` | `path` con lista de archivos | Usar `path: .` |
 
----
-
-## Artefacto de despliegue
-
-El workflow usa `path: .` — sube la raíz del repositorio. Las carpetas nuevas de infografías se incluyen solas; no hace falta editar el workflow.
-
-`.git` y `.github` se excluyen automáticamente al empaquetar.
+Más contexto: [GITHUB_PAGES.md](GITHUB_PAGES.md#solución-de-problemas)
 
 ---
 
-## URL publicada
+## URLs
 
 - Índice: `https://cesaredul.github.io/Infografia/`
 - Algarrobo: `https://cesaredul.github.io/Infografia/algarrobo/`
 
-La URL exacta aparece en el run del workflow, en el entorno **github-pages**.
+La URL exacta aparece en cada run de Actions, en el entorno **github-pages**.

@@ -62,8 +62,11 @@ git commit -m "Añadir infografía: mi-tema"
 git push origin main
 ```
 
-No hace falta editar el workflow: despliega la raíz del repo (`path: .`). `.git` y `.github` se excluyen automáticamente.
+Cada push a `main` despliega automáticamente en GitHub Pages. No hace falta editar el workflow.
+
+- **Guía de Pages:** [GITHUB_PAGES.md](GITHUB_PAGES.md)
+- **Secrets y workflow:** [DEPLOY.md](DEPLOY.md)
 
 ### Si el despliegue falla
 
-Error `Get Pages site failed`: activa **Settings → Pages → Source: GitHub Actions**, crea `GH_PAGES_TOKEN` si hace falta (ver [DEPLOY.md](DEPLOY.md)) y reejecuta el workflow.
+Consulta la sección [Solución de problemas](GITHUB_PAGES.md#solución-de-problemas) en `GITHUB_PAGES.md`.
