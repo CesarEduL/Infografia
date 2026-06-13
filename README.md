@@ -49,7 +49,24 @@ Luego visita `http://localhost:8000/algarrobo/`.
 
 El workflow `.github/workflows/deploy-pages.yml` publica el sitio en cada push a `main`.
 
-Configuración requerida en GitHub (solo la primera vez):
+### Primera vez (obligatorio)
 
-1. **Settings → Pages → Build and deployment → Source:** GitHub Actions
-2. El workflow se encarga del resto.
+Si el workflow falla con `Get Pages site failed` / `Not Found`, GitHub Pages aún no está activado. Haz esto **una vez**:
+
+1. Ve a **Settings → Pages** en el repositorio.
+2. En **Build and deployment → Source**, selecciona **GitHub Actions** (no "Deploy from a branch").
+3. Vuelve a **Actions**, abre el workflow fallido y pulsa **Re-run all jobs**.
+
+El workflow también intenta activar Pages automáticamente vía API, pero en algunos repos hace falta el paso manual anterior.
+
+### Añadir carpetas al despliegue
+
+Cuando crees una infografía nueva, agrégala en `.github/workflows/deploy-pages.yml` bajo `Upload artifact → path`:
+
+```yaml
+path: |
+  index.html
+  404.html
+  algarrobo
+  mi-nueva-infografia
+```

@@ -24,13 +24,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Enable GitHub Pages (workflow)
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/pages" \
+            --input - <<< '{"build_type":"workflow"}' \
+          || gh api --method PUT "repos/${{ github.repository }}/pages" \
+            --input - <<< '{"build_type":"workflow"}'
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: |
+            index.html
+            404.html
+            algarrobo
 
       - name: Deploy to GitHub Pages
         id: deployment

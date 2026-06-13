@@ -62,4 +62,10 @@ git commit -m "Añadir infografía: mi-tema"
 git push origin main
 ```
 
+Añade también la carpeta nueva en `.github/workflows/deploy-pages.yml` (sección `Upload artifact → path`).
+
 El workflow de GitHub Actions despliega automáticamente en unos minutos.
+
+### Si el despliegue falla
+
+Error `Get Pages site failed`: activa **Settings → Pages → Source: GitHub Actions** y reejecuta el workflow.
