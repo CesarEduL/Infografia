@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algarrobo en crisis — Perú</title>
+  <style>
+    html, body { height: 100%; }
+    body { background: #000; margin: 0; padding: 16px; box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column; }
+  </style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.lh{background:#000;color:#ccc;font-family:var(--font-sans);flex:1;min-height:600px;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;position:relative}
+.lh-header{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #222;z-index:10;flex-shrink:0}
+.nav-links a{font-size:9px;color:#fff;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;font-weight:500}
+.lh-title{font-size:13px;font-weight:500;color:#fff;letter-spacing:0.07em;text-transform:uppercase;position:absolute;left:50%;transform:translateX(-50%)}
+.close-btn{margin-left:auto;color:#555;cursor:pointer;font-size:13px;padding:0 4px}
+.lh-body{flex:1;display:flex;overflow:hidden;min-height:0}
+.map-area{flex:1;position:relative;overflow:hidden;cursor:grab}
+.map-area:active{cursor:grabbing}
+#mapSvg{width:100%;height:100%}
+.zoom-btns{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:15}
+.zoom-btn{width:24px;height:24px;background:rgba(20,20,20,0.9);border:1px solid #333;color:#aaa;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;transition:color 0.2s,border-color 0.2s}
+.zoom-btn:hover{color:#fff;border-color:#666}
+.sidebar{width:185px;flex-shrink:0;background:#0d0d0d;border-left:1px solid #222;padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.s-label{font-size:8px;letter-spacing:0.14em;color:#888;text-transform:uppercase;margin-bottom:5px}
+.pie-wrap{display:flex;justify-content:center}
+.clan-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;margin-top:6px}
+.clan-name{font-size:10px;letter-spacing:0.04em;font-weight:500}
+.stat-block{border-top:1px solid #222;padding-top:9px}
+.stat-val{font-size:15px;font-weight:600;letter-spacing:0.02em}
+.stat-lbl{font-size:10px;color:#888;margin-top:3px;line-height:1.5;letter-spacing:0.02em}
+.stat-side-year{font-size:15px;font-weight:600;color:#6dbf87}
+.stat-side-note{font-size:10px;color:#888;margin-top:3px;line-height:1.5}
+.map-tooltip{position:absolute;background:rgba(4,4,4,0.95);border:1px solid #333;padding:7px 9px;max-width:185px;font-size:10px;color:#bbb;line-height:1.5;pointer-events:none;z-index:30;display:none;border-radius:2px}
+.map-tooltip b{color:#fff;font-size:11px;display:block;margin-bottom:2px}
+.tooltip-box{position:absolute;background:rgba(4,4,4,0.95);border:1px solid #333;padding:9px 11px;max-width:210px;font-size:10px;color:#bbb;line-height:1.6;pointer-events:none;z-index:20;display:none;bottom:108px;left:12px}
+.tooltip-box::after{content:'';position:absolute;bottom:-7px;left:18px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #333}
+.tip-year{font-size:12px;color:#fff;font-weight:600;margin-bottom:4px}
+.tl-wrap{border-top:1px solid #222;background:#060606;padding:8px 14px 10px;flex-shrink:0}
+.tl-years-row{position:relative;height:16px;margin-bottom:4px;overflow:hidden}
+.tl-year-mark{position:absolute;font-size:9px;color:#999;top:0;letter-spacing:0.05em;white-space:nowrap;font-weight:500}
+.tl-year-mark.anchor-left{transform:translateX(-50%)}
+.tl-year-mark.anchor-right{transform:translateX(-100%)}
+.tl-dots-row{display:flex;align-items:center;height:10px;margin-bottom:5px}
+.tl-seg{flex:1;height:1px;background:#2a2a2a}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:#1a1a1a;border:1px solid #444;flex-shrink:0;cursor:pointer;transition:all 0.2s}
+.tl-dot:hover{background:#666;border-color:#888}
+.tl-dot.active{background:#bbb;border-color:#ddd;box-shadow:0 0 5px rgba(220,220,220,0.3)}
+.tl-periods-row{display:flex}
+.tl-era{flex:1;cursor:pointer;padding:0 3px}
+.tl-era-name{font-size:9px;color:#555;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;line-height:1.2;font-weight:500}
+.tl-era-years{font-size:8px;color:#444;letter-spacing:0.04em;margin-top:1px}
+.tl-era.active .tl-era-name{color:#ddd;font-weight:600}
+.tl-era.active .tl-era-years{color:#888}
+.tl-era:hover .tl-era-name{color:#aaa}
+.tl-era:hover .tl-era-years{color:#666}
+
+/* ── LEYENDA compacta en 2 filas limpias ── */
+.legend-area{position:absolute;bottom:8px;left:10px;display:flex;flex-direction:column;gap:4px}
+.legend-row{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.leg-sep{width:1px;height:12px;background:#333;flex-shrink:0}
+.leg-item{display:flex;align-items:center;gap:3px;font-size:8.5px;color:#999;letter-spacing:0.05em;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.leg-sq{width:7px;height:5px;border-radius:1px;flex-shrink:0}
+.leg-lbl{font-size:8px;color:#666;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;margin-right:2px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="lh">
+  <div class="lh-header">
+    <div class="nav-links"><a>DEFORESTACIÓN</a></div>
+    <div class="lh-title">ALGARROBO EN CRISIS — PERÚ</div>
+    <div class="close-btn">✕</div>
+  </div>
+  <div class="lh-body">
+    <div class="map-area" id="mapArea">
+      <svg id="mapSvg"></svg>
+      <div class="map-tooltip" id="mapTip"></div>
+      <div class="zoom-btns">
+        <div class="zoom-btn" id="zoomIn">+</div>
+        <div class="zoom-btn" id="zoomOut">−</div>
+        <div class="zoom-btn" id="zoomReset" style="font-size:10px">⊙</div>
+      </div>
+      <div class="tooltip-box" id="tipBox">
+        <div class="tip-year" id="tipTitle"></div>
+        <div id="tipBody"></div>
+      </div>
+
+      <div class="legend-area">
+        <!-- Fila 1: zonas de afectación + ruta -->
+        <div class="legend-row">
+          <span class="leg-lbl">Zonas:</span>
+          <div class="leg-item"><div class="leg-dot" style="background:#c01810"></div>Crítico</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#b06010"></div>Grave</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#7a8a18"></div>Severo</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#2a6a48"></div>Moderado</div>
+          <div class="leg-item"><div class="leg-sq" style="background:#c8a020"></div>Frontera activa</div>
+          <div class="leg-sep"></div>
+          <div class="leg-item">
+            <svg width="16" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="16" y2="4" stroke="#00bcd4" stroke-width="1.6" stroke-dasharray="4,2"/></svg>
+            Ruta contrabando
+          </div>
+        </div>
+        <!-- Fila 2: íconos de eventos -->
+        <div class="legend-row">
+          <span class="leg-lbl">Eventos:</span>
+          <div class="leg-item"><svg width="11" height="11" id="s1"><path fill="#e03020"/></svg>Tala / pérdida</div>
+          <div class="leg-item"><svg width="11" height="11" id="s2"><path fill="#f05030"/></svg>Incendio</div>
+          <div class="leg-item"><svg width="11" height="11" id="s3"><path fill="#d0a030"/></svg>Carbón / alerta</div>
+          <div class="leg-item"><svg width="11" height="11" id="s4"><path fill="#5090d0"/></svg>Tráfico</div>
+          <div class="leg-item"><svg width="11" height="11" id="s5"><path fill="#b030c0"/></svg>Colapso</div>
+          <div class="leg-item"><svg width="11" height="11" id="s6"><path fill="#00bcd4"/></svg>Decomiso SERFOR</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div>
+        <div class="s-label">Norte peruano · ha perdidas</div>
+        <div class="pie-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#7a1008" stroke-width="24" stroke-dasharray="145 81" stroke-dashoffset="0"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#6b3a08" stroke-width="24" stroke-dasharray="60 166" stroke-dashoffset="-145"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#4a5208" stroke-width="24" stroke-dasharray="40 186" stroke-dashoffset="-205"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#1a3a28" stroke-width="24" stroke-dasharray="28 198" stroke-dashoffset="-245"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#283a18" stroke-width="24" stroke-dasharray="53 173" stroke-dashoffset="-273"/>
+            <circle cx="50" cy="50" r="34" fill="#080808"/>
+            <text x="50" y="46" text-anchor="middle" font-size="9" fill="#bbb" font-family="sans-serif" font-weight="600">440 000</text>
+            <text x="50" y="58" text-anchor="middle" font-size="7" fill="#777" font-family="sans-serif">ha · norte Perú</text>
+          </svg>
+        </div>
+        <div class="clan-grid">
+          <span class="clan-name" style="color:#e07060">PIURA</span>
+          <span class="clan-name" style="color:#c09050">LAMBAY.</span>
+          <span class="clan-name" style="color:#c08050">LA LIB.</span>
+          <span class="clan-name" style="color:#70aa60">TUMBES</span>
+          <span class="clan-name" style="color:#90aa40">CAJAM.</span>
+          <span class="clan-name" style="color:#aaa">OTROS</span>
+        </div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val" style="color:#e07060">13 000–17 000</div>
+        <div class="stat-lbl">ha/año taladas en Piura · reforestación &lt;1 000 ha (SERFOR 2023)</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val" style="color:#c8a040">252 179 ha</div>
+        <div class="stat-lbl">perdidas en Piura 2010–2024 · promedio 18 000 ha/año (MapBiomas)</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-side-year" id="sideYear">—</div>
+        <div class="stat-side-note" id="sideNote">Selecciona un período en el timeline para ver detalles.</div>
+      </div>
+    </div>
+  </div>
+  <div class="tl-wrap">
+    <div class="tl-years-row" id="yearsRow"></div>
+    <div class="tl-dots-row" id="dotsRow"></div>
+    <div class="tl-periods-row" id="periodsRow"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const regionData={
+  'Piura':        {level:5,loss:'252 179 ha (2010–2024)',rate:'13 000–17 000 ha/año',status:'CRÍTICO', color:'#7a1008',hov:'#a01810',note:'Especie clasificada "Vulnerable" (D.S. 043-2006-AG). SERFOR decomisó 3 500 unidades de leña ilegal en enero 2025. Reforestación <1 000 ha/año.'},
+  'Tumbes':       {level:4,loss:'Afectado',rate:'—',      status:'CRÍTICO', color:'#6a1408',hov:'#8a2010',note:'Punto de entrada de productos forestales desde Ecuador. "Los productos vienen de Ecuador en su mayoría y también salen de Perú" (SERFOR).'},
+  'Lambayeque':   {level:4,loss:'Afectado',rate:'—',      status:'GRAVE',   color:'#6b3a08',hov:'#8a5010',note:'Integra el corredor de bosque seco norte. 440 000 ha perdidas entre Piura, Lambayeque, Tumbes y La Libertad (MapBiomas Perú).'},
+  'La Libertad':  {level:3,loss:'Afectado',rate:'—',      status:'GRAVE',   color:'#5a3208',hov:'#7a4810',note:'Forma parte del ecosistema de bosque seco del norte. Ruta de salida hacia Olmos documentada por SERFOR.'},
+  'Cajamarca':    {level:3,loss:'Afectado',rate:'—',      status:'SEVERO',  color:'#4a5a10',hov:'#6a7a18',note:'Bosque seco jalca y algarrobales en cuencas interandinas afectados por expansión agrícola.'},
+  'Amazonas':     {level:2,loss:'—',        rate:'—',      status:'SEVERO',  color:'#1a4a18',hov:'#2a6a28',note:'Corredor secundario de madera hacia la costa.'},
+  'Ancash':       {level:2,loss:'—',        rate:'—',      status:'MODERADO',color:'#1a3a28',hov:'#2a5a38',note:'Destino de productos forestales ilegales.'},
+  'San Martin':   {level:2,loss:'—',        rate:'—',      status:'SEVERO',  color:'#1a4a18',hov:'#2a6a28',note:'Corredor de madera ilegal norte.'},
+  'Loreto':       {level:1,loss:'—',        rate:'—',      status:'AMAZÓNICO',color:'#1a2a18',hov:'#253a22',note:'Fuente de madera ilegal amazónica.'},
+  'Ucayali':      {level:1,loss:'—',        rate:'—',      status:'AMAZÓNICO',color:'#1a2a18',hov:'#253a22',note:'Ruta central de tráfico maderero.'},
+  'Huanuco':      {level:1,loss:'—',        rate:'—',      status:'TRÁFICO', color:'#1a1a2a',hov:'#252535',note:'Corredor de tráfico hacia Lima.'},
+  'Lima':         {level:0,loss:'—',        rate:'—',      status:'DESTINO', color:'#111118',hov:'#1a1a28',note:'Principal mercado de carbón y madera ilegal.'},
+  'Ica':          {level:0,loss:'—',        rate:'—',      status:'DESTINO', color:'#111118',hov:'#1a1a28',note:'Mercado secundario de productos forestales ilegales.'},
+  'Madre de Dios':{level:1,loss:'—',        rate:'—',      status:'AMAZÓNICO',color:'#1a2818',hov:'#253822',note:'Ruta sur de madera ilegal amazónica.'},
+};
+const defaultRegion={level:0,loss:'—',rate:'—',status:'—',color:'#0d0d0d',hov:'#181818',note:''};
+
+const regionLabels={
+  'Piura':'PIURA','Tumbes':'TUMBES','Lambayeque':'LAMBAYEQUE',
+  'La Libertad':'LA LIBERTAD','Cajamarca':'CAJAMARCA','Amazonas':'AMAZONAS',
+  'Ancash':'ÁNCASH','San Martin':'SAN MARTÍN','Loreto':'LORETO',
+  'Ucayali':'UCAYALI','Huanuco':'HUÁNUCO','Lima':'LIMA',
+  'Ica':'ICA','Madre de Dios':'MADRE DE DIOS','Puno':'PUNO',
+  'Cusco':'CUSCO','Arequipa':'AREQUIPA','Moquegua':'MOQUEGUA',
+  'Tacna':'TACNA','Ayacucho':'AYACUCHO','Apurimac':'APURÍMAC',
+  'Huancavelica':'HUANCAVELICA','Junin':'JUNÍN','Pasco':'PASCO','Callao':'CALLAO',
+};
+
+// Offsets Y manuales para ajustar etiquetas que se solapan
+const labelOffsetY={
+  'Cajamarca': 16,    // baja para no solapar con Lambayeque
+  'San Martin':-8,    // sube a altura intermedia entre Cajamarca y La Libertad
+  'La Libertad': 6,
+  'Amazonas': -4,
+};
+
+function labelDefaultColor(rd){return rd.level>=2?'#aaa':'#555';}
+function labelFontSize(rd){if(rd.level>=5)return 11;if(rd.level>=3)return 9;return 7;}
+
+const smugglingRoutes=[
+  {color:'#ff6b6b',arrow:'arrowRed', points:[[-80.45,-3.50],[-80.46,-3.56],[-80.67,-3.81],[-80.68,-4.90]]},
+  {color:'#00bcd4',arrow:'arrowCyan',points:[[-80.16,-5.10],[-80.35,-5.14],[-80.63,-5.19]]},
+  {color:'#00bcd4',arrow:'arrowCyan',points:[[-80.82,-5.56],[-80.72,-5.38],[-80.63,-5.19]]},
+  {color:'#26c6da',arrow:'arrowCyan',points:[[-80.68,-4.90],[-80.65,-5.05],[-80.63,-5.19]]},
+  {color:'#00bcd4',arrow:'arrowCyan',points:[[-79.97,-5.09],[-80.20,-5.14],[-80.63,-5.19]]},
+  {color:'#4dd0e1',arrow:'arrowCyan',points:[[-80.24,-4.65],[-80.38,-4.88],[-80.63,-5.19]]},
+  {color:'#80cbc4',arrow:'arrowTeal',points:[[-80.63,-5.19],[-79.95,-5.82],[-79.75,-5.98]]},
+];
+const routeNodes=[
+  {label:'CHULUCANAS',      sub:'+15 carreteras ilegales (SERFOR)',lon:-80.16,lat:-5.10,color:'#00bcd4'},
+  {label:'SULLANA',         sub:'~8 carreteras · ruta principal', lon:-80.68,lat:-4.90,color:'#00bcd4'},
+  {label:'MORROPÓN',        sub:'~20 carreteras · Chato Chico/Grande',lon:-79.97,lat:-5.09,color:'#00bcd4'},
+  {label:'LAS LOMAS',       sub:'Ramal: San Juan de Bautista',    lon:-80.24,lat:-4.65,color:'#4dd0e1'},
+  {label:'SECHURA',         sub:'Ruta Sechura–Piura intervenida', lon:-80.82,lat:-5.56,color:'#00bcd4'},
+  {label:'OLMOS',           sub:'Destino final de ramales',       lon:-79.75,lat:-5.98,color:'#80cbc4'},
+  {label:'DESIERTO SECHURA',sub:'Algarrobo descubierto (SERFOR)', lon:-80.50,lat:-5.75,color:'#4dd0e1'},
+];
+const iconColor={tree:'#e03020',fire:'#f05030',coal:'#d0a030',truck:'#5090d0',warn:'#d0a030',down:'#b030c0',serfor:'#00bcd4'};
+
+const eras=[
+  {name:'BOSQUE ÍNTEGRO',   years:'Hasta 2009',subYears:['2000','2004','2007','2009'],bColor:null,showRoutes:false,
+   note:'El algarrobo (Neltuma sp.) clasificado como "Vulnerable" (D.S. 043-2006-AG). En 2010 se producían 6 531 m³ de carbón de algarrobo destinado a restaurantes de pollo a la brasa.',events:[]},
+  {name:'PRIMERA CRISIS',   years:'2010–2016', subYears:['2010','2012','2014','2016'],bColor:'rgba(200,160,40,0.8)',showRoutes:false,
+   note:'2012: 13 333 ha deforestadas en Piura. 2010–2024 sumarán 252 179 ha (prom. 18 000 ha/año). Fuente: MapBiomas / Actualidad Ambiental.',
+   events:[{icon:'tree',label:'13 333 ha (2012)',lat:-5.2,lon:-80.5},{icon:'coal',label:'Carbón ilegal',lat:-5.7,lon:-80.4},{icon:'coal',label:'Pollo a la brasa',lat:-6.2,lon:-80.1}]},
+  {name:'EXPANSIÓN ILEGAL', years:'2017–2019', subYears:['2017','2018','2019'],bColor:'rgba(200,90,30,0.85)',showRoutes:false,
+   note:'2019: 12 114 ha perdidas en Piura (Geobosques-MINAM). Rutas documentadas: Chulucanas–Piura, Sullana–Piura, Sechura–Piura. Entrada vía Ecuador–Tumbes.',
+   events:[{icon:'truck',label:'12 114 ha (2019)',lat:-5.0,lon:-80.6},{icon:'warn',label:'Rutas Ecuador',lat:-4.0,lon:-80.5},{icon:'tree',label:'Tala Morropón',lat:-5.1,lon:-79.9}]},
+  {name:'PANDEMIA Y REBOTE',years:'2020–2022', subYears:['2020','2021','2022'],bColor:'rgba(220,40,20,0.9)',showRoutes:true,
+   note:'2020: 3 954 ha (pandemia). 2021: rebote a 6 730 ha. Redes con +15 carreteras en Chulucanas, ~8 en Sullana, ~20 en Morropón (SERFOR).',
+   events:[{icon:'down',label:'3 954 ha (2020)',lat:-5.3,lon:-80.7},{icon:'warn',label:'6 730 ha (2021)',lat:-4.8,lon:-80.6},{icon:'serfor',label:'+20 rutas Morropón',lat:-5.0,lon:-79.9}]},
+  {name:'CRISIS ACTUAL',    years:'2023–2026', subYears:['2023','2024','2025','2026'],bColor:'rgba(80,200,180,0.85)',showRoutes:true,
+   note:'2023: 17 000 ha taladas en Piura. Reforestación <1 000 ha (SERFOR). Enero 2025: 3 500 unidades de leña decomisadas. Algarrobo en riesgo de extinción local.',
+   events:[{icon:'down',label:'17 000 ha (2023)',lat:-5.3,lon:-80.7},{icon:'serfor',label:'3 500 uds decomisadas',lat:-5.0,lon:-80.3},{icon:'warn',label:'Reforest. <1 000 ha',lat:-6.1,lon:-80.2}]},
+];
+
+let activeEra=-1,allFeatures=[],geoProj=null,currentTransform=d3.zoomIdentity;
+const svgEl=document.getElementById('mapSvg');
+const svg=d3.select(svgEl);
+const mapTip=document.getElementById('mapTip');
+
+const zoom=d3.zoom().scaleExtent([1,12]).on('zoom',e=>{
+  currentTransform=e.transform;
+  ['#zoomG','#routesG','#markersG','#labelsG'].forEach(id=>svg.select(id).attr('transform',e.transform));
+});
+svg.call(zoom);
+document.getElementById('zoomIn').onclick =()=>svg.transition().duration(300).call(zoom.scaleBy,1.8);
+document.getElementById('zoomOut').onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1/1.8);
+document.getElementById('zoomReset').onclick=()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity);
+
+function getW(){return document.getElementById('mapArea').clientWidth;}
+function getH(){return document.getElementById('mapArea').clientHeight;}
+function normName(s){return s.toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/\s+/g,'');}
+function nameMatch(props){
+  if(!props)return null;
+  const n=normName(props.NAME_1||props.name||props.NAME||'');
+  for(const k of Object.keys(regionData))if(n.includes(normName(k).substring(0,5)))return k;
+  return null;
+}
+function starPath(cx,cy,r,ir,pts){
+  let d='';for(let i=0;i<pts*2;i++){const a=(i*Math.PI/pts)-Math.PI/2,ra=i%2===0?r:ir;d+=(i===0?'M':'L')+(cx+Math.cos(a)*ra).toFixed(2)+','+(cy+Math.sin(a)*ra).toFixed(2);}return d+'Z';
+}
+function showMapTip(html,e){
+  const area=document.getElementById('mapArea').getBoundingClientRect();
+  mapTip.innerHTML=html;mapTip.style.display='block';
+  mapTip.style.left=(e.clientX-area.left+12)+'px';
+  mapTip.style.top=(e.clientY-area.top-10)+'px';
+}
+function hideMapTip(){mapTip.style.display='none';}
+
+// Dibujar estrellas en leyenda HTML
+function buildLegendStars(){
+  [['s1',5.5,5.5],['s2',5.5,5.5],['s3',5.5,5.5],['s4',5.5,5.5],['s5',5.5,5.5],['s6',5.5,5.5]].forEach(([id,cx,cy])=>{
+    const el=document.getElementById(id);
+    if(el){const p=el.querySelector('path');if(p)p.setAttribute('d',starPath(cx,cy,4.5,2,8));}
+  });
+}
+
+function render(){
+  const W=getW(),H=getH();
+  svg.attr('width',W).attr('height',H);
+  if(!allFeatures.length)return;
+  const proj=d3.geoMercator().fitSize([W,H],{type:'FeatureCollection',features:allFeatures});
+  const path=d3.geoPath(proj);
+  geoProj=proj;
+  svg.selectAll('*').remove();
+
+  const defs=svg.append('defs');
+  allFeatures.forEach((f,i)=>{
+    const rk=nameMatch(f.properties),rd=rk?regionData[rk]:null;
+    if(!rd||rd.level<2)return;
+    const fi=defs.append('filter').attr('id','bl'+i).attr('x','-40%').attr('y','-40%').attr('width','180%').attr('height','180%');
+    fi.append('feGaussianBlur').attr('stdDeviation',rd.level*3.5);
+  });
+  const gf=defs.append('filter').attr('id','glow').attr('x','-20%').attr('y','-20%').attr('width','140%').attr('height','140%');
+  gf.append('feGaussianBlur').attr('stdDeviation','2.5').attr('result','blur');
+  const fm=gf.append('feMerge');fm.append('feMergeNode').attr('in','blur');fm.append('feMergeNode').attr('in','SourceGraphic');
+  [['arrowCyan','#00bcd4'],['arrowRed','#ff6b6b'],['arrowTeal','#80cbc4']].forEach(([id,col])=>{
+    defs.append('marker').attr('id',id).attr('markerWidth',5).attr('markerHeight',5).attr('refX',4).attr('refY',2.5).attr('orient','auto')
+      .append('path').attr('d','M0,0 L0,5 L5,2.5 Z').attr('fill',col).attr('opacity',0.8);
+  });
+
+  const gMain=svg.append('g').attr('id','zoomG').attr('transform',currentTransform);
+  allFeatures.forEach((f,i)=>{
+    const rk=nameMatch(f.properties),rd=rk?regionData[rk]:null;
+    if(!rd||rd.level<2)return;
+    gMain.append('path').datum(f).attr('d',path).attr('fill',rd.hov).attr('opacity',0.3+rd.level*0.06).attr('filter','url(#bl'+i+')').style('pointer-events','none');
+  });
+  allFeatures.forEach(f=>{
+    const rk=nameMatch(f.properties),rd=rk?regionData[rk]:defaultRegion;
+    gMain.append('path').datum(f).attr('d',path).attr('fill',rd.color).attr('stroke','#1a1a1a').attr('stroke-width',0.4)
+      .style('cursor',rd.note?'pointer':'default')
+      .on('mouseenter',function(){
+        if(!rd.note)return;
+        d3.select(this).attr('fill',rd.hov);
+        if(rk)svg.select(`#lbl-${rk.replace(/\s/g,'_')}`).attr('fill','#ffffff');
+        showRegionTip(rk,rd);
+      })
+      .on('mouseleave',function(){
+        d3.select(this).attr('fill',rd.color);
+        if(rk)svg.select(`#lbl-${rk.replace(/\s/g,'_')}`).attr('fill',labelDefaultColor(rd));
+        if(activeEra>=0)showEraTip();else clearTip();
+      });
+  });
+
+  const era=activeEra>=0?eras[activeEra]:null;
+  if(era&&era.bColor){
+    ['Piura','Tumbes','Lambayeque','La Libertad','Cajamarca','Ancash','Amazonas'].forEach(rn=>{
+      const f=allFeatures.find(f=>nameMatch(f.properties)===rn);if(!f)return;
+      gMain.append('path').datum(f).attr('d',path).attr('fill','none').attr('stroke',era.bColor).attr('stroke-width',1.3).attr('filter','url(#glow)').style('pointer-events','none');
+    });
+  }
+
+  // Labels con offsets
+  const gLabels=svg.append('g').attr('id','labelsG').attr('transform',currentTransform);
+  allFeatures.forEach(f=>{
+    const rk=nameMatch(f.properties),rd=rk?regionData[rk]:null;
+    if(!rd||rd.level<2)return;
+    const c=path.centroid(f);if(!c||isNaN(c[0]))return;
+    const fullName=regionLabels[rk]||(rk||'').toUpperCase();
+    const offY=labelOffsetY[rk]||0;
+    gLabels.append('text')
+      .attr('id',`lbl-${(rk||'').replace(/\s/g,'_')}`)
+      .attr('x',c[0]).attr('y',c[1]+offY)
+      .attr('text-anchor','middle')
+      .attr('font-size',labelFontSize(rd))
+      .attr('fill',labelDefaultColor(rd))
+      .attr('font-weight','400')
+      .attr('letter-spacing','0.07em')
+      .attr('pointer-events','none')
+      .text(fullName);
+  });
+
+  const gRoutes=svg.append('g').attr('id','routesG').attr('transform',currentTransform);
+  if(era&&era.showRoutes){
+    const lineGen=d3.line().x(d=>geoProj([d[0],d[1]])[0]).y(d=>geoProj([d[0],d[1]])[1]).curve(d3.curveCatmullRom.alpha(0.5));
+    smugglingRoutes.forEach(r=>{
+      const aid=r.arrow==='arrowRed'?'url(#arrowRed)':r.arrow==='arrowTeal'?'url(#arrowTeal)':'url(#arrowCyan)';
+      gRoutes.append('path').attr('d',lineGen(r.points)).attr('fill','none').attr('stroke',r.color)
+        .attr('stroke-width',1.2).attr('opacity',0.7).attr('stroke-dasharray','5,3').attr('marker-end',aid)
+        .attr('filter','url(#glow)').style('pointer-events','none');
+    });
+    routeNodes.forEach(n=>{
+      const xy=geoProj([n.lon,n.lat]);if(!xy)return;
+      const [x,y]=xy;
+      gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',6).attr('fill',n.color).attr('opacity',0.15).style('pointer-events','none');
+      const dot=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',3).attr('fill',n.color).attr('opacity',0.9).attr('filter','url(#glow)').style('cursor','pointer');
+      dot.on('mouseenter',function(e){d3.select(this).attr('r',5).attr('opacity',1);showMapTip(`<b style="color:#80deea">${n.label}</b>${n.sub}`,e);})
+         .on('mousemove',function(e){showMapTip(`<b style="color:#80deea">${n.label}</b>${n.sub}`,e);})
+         .on('mouseleave',function(){d3.select(this).attr('r',3).attr('opacity',0.9);hideMapTip();});
+    });
+  }
+
+  const gMarkers=svg.append('g').attr('id','markersG').attr('transform',currentTransform);
+  if(era&&era.events&&era.events.length){
+    era.events.forEach(ev=>{
+      const xy=geoProj([ev.lon,ev.lat]);if(!xy)return;
+      const [mx,my]=xy;
+      const col=iconColor[ev.icon]||'#e03020';
+      const star=gMarkers.append('path').attr('d',starPath(mx,my,5,2.2,8)).attr('fill',col).attr('opacity',0.9).attr('filter','url(#glow)').style('cursor','pointer');
+      star.on('mouseenter',function(e){d3.select(this).attr('transform',`translate(${mx},${my}) scale(1.4) translate(${-mx},${-my})`);showMapTip(`<b style="color:#ddd">${ev.label}</b>`,e);})
+          .on('mousemove',function(e){showMapTip(`<b style="color:#ddd">${ev.label}</b>`,e);})
+          .on('mouseleave',function(){d3.select(this).attr('transform',null);hideMapTip();});
+    });
+  }
+}
+
+function showRegionTip(rk,rd){
+  const sc={CRÍTICO:'#e07060',GRAVE:'#d0a040',SEVERO:'#90aa50',AMAZÓNICO:'#60aa80',TRÁFICO:'#8080cc',DESTINO:'#9090cc'}[rd.status]||'#aaa';
+  const tip=document.getElementById('tipBox');tip.style.display='block';
+  document.getElementById('tipTitle').textContent=rk||'';
+  document.getElementById('tipBody').innerHTML=`<span style="color:${sc};font-size:9px;letter-spacing:0.09em;font-weight:600">${rd.status}</span><br>${rd.loss!=='—'?'<strong style="color:#ddd">'+rd.loss+'</strong><br>':''}${rd.rate!=='—'?rd.rate+'<br>':''}${rd.note}`;
+}
+function showEraTip(){
+  const era=eras[activeEra];const tip=document.getElementById('tipBox');tip.style.display='block';
+  document.getElementById('tipTitle').textContent=era.years;
+  document.getElementById('tipBody').textContent=era.note;
+}
+function clearTip(){
+  document.getElementById('tipBox').style.display='none';
+  document.getElementById('sideYear').textContent='—';
+  document.getElementById('sideNote').textContent='Selecciona un período en el timeline para ver detalles.';
+}
+
+d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
+  const key=Object.keys(topo.objects)[0];
+  allFeatures=topojson.feature(topo,topo.objects[key]).features;
+  render();
+  buildLegendStars();
+  window.addEventListener('resize',()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);render();});
+}).catch(()=>{document.getElementById('mapArea').innerHTML='<div style="color:#666;padding:20px">Error cargando mapa</div>';});
+
+function buildTL(){
+  const dr=document.getElementById('dotsRow'),pr=document.getElementById('periodsRow'),yr=document.getElementById('yearsRow');
+  dr.innerHTML='';pr.innerHTML='';yr.innerHTML='';
+  eras.forEach((e,i)=>{
+    if(i>0){const s=document.createElement('div');s.className='tl-seg';dr.appendChild(s);}
+    const d=document.createElement('div');d.className='tl-dot'+(i===activeEra?' active':'');d.onclick=()=>selectEra(i);dr.appendChild(d);
+    const ep=document.createElement('div');ep.className='tl-era'+(i===activeEra?' active':'');
+    ep.innerHTML=`<div class="tl-era-name">${e.name}</div><div class="tl-era-years">${e.years}</div>`;
+    ep.onclick=()=>selectEra(i);pr.appendChild(ep);
+  });
+  if(activeEra<0)return;
+  const era=eras[activeEra],isLast=(activeEra===eras.length-1);
+  era.subYears.forEach((y,i)=>{
+    const sp=document.createElement('span');sp.className='tl-year-mark';
+    const base=activeEra/(eras.length-1)*100,w=100/(eras.length-1);
+    let pct=base-w*0.5+(i/(era.subYears.length-1))*w;
+    pct=Math.max(1,Math.min(99,pct));
+    sp.style.left=pct+'%';
+    sp.classList.add(isLast?'anchor-right':'anchor-left');
+    sp.textContent=y;yr.appendChild(sp);
+  });
+}
+function selectEra(i){
+  if(activeEra===i){activeEra=-1;buildTL();clearTip();render();return;}
+  activeEra=i;buildTL();
+  document.getElementById('sideYear').textContent=eras[i].years;
+  document.getElementById('sideNote').textContent=eras[i].note.substring(0,90)+'…';
+  showEraTip();if(allFeatures.length)render();
+}
+buildTL();
+</script>
+</body>
+</html>
