@@ -91,29 +91,31 @@ PAT con permisos de administración del repositorio.
 
 ## Cómo lee el workflow los secrets
 
+GitHub **no permite** usar `secrets` en condiciones `if`. El workflow detecta primero si existe `GH_PAGES_TOKEN`:
+
 ```yaml
-# Solo si existe GH_PAGES_TOKEN — activar Pages por API
+- name: Detect Pages token
+  id: pages-token
+  env:
+    GH_PAGES_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+  run: |
+    if [ -n "$GH_PAGES_TOKEN" ]; then
+      echo "present=true" >> "$GITHUB_OUTPUT"
+    else
+      echo "present=false" >> "$GITHUB_OUTPUT"
+    fi
+
 - name: Enable GitHub Pages (workflow)
-  if: ${{ secrets.GH_PAGES_TOKEN != '' }}
+  if: steps.pages-token.outputs.present == 'true'
   env:
     GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
-
-# configure-pages: enablement solo con PAT
-- uses: actions/configure-pages@v5
-  with:
-    token: ${{ secrets.GH_PAGES_TOKEN || github.token }}
-    enablement: ${{ secrets.GH_PAGES_TOKEN != '' }}
-
-# deploy-pages: PAT o token por defecto
-- uses: actions/deploy-pages@v4
-  with:
-    token: ${{ secrets.GH_PAGES_TOKEN || github.token }}
 ```
 
 | Paso | Token usado | Condición |
 |------|-------------|-----------|
-| Enable GitHub Pages | `secrets.GH_PAGES_TOKEN` | Solo si el secret existe |
-| Setup Pages | PAT o `github.token` | `enablement` solo con PAT |
+| Detect Pages token | `secrets.GH_PAGES_TOKEN` vía `env` | Siempre |
+| Enable GitHub Pages | `secrets.GH_PAGES_TOKEN` | Solo si `present == true` |
+| Setup Pages | PAT o `github.token` | `enablement` solo si `present == true` |
 | Deploy | PAT o `github.token` | Siempre |
 
 ---

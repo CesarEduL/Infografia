@@ -24,8 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect Pages token
+        id: pages-token
+        env:
+          GH_PAGES_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+        run: |
+          if [ -n "$GH_PAGES_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Enable GitHub Pages (workflow)
-        if: ${{ secrets.GH_PAGES_TOKEN != '' }}
+        if: steps.pages-token.outputs.present == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
         run: |
@@ -38,7 +49,7 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           token: ${{ secrets.GH_PAGES_TOKEN || github.token }}
-          enablement: ${{ secrets.GH_PAGES_TOKEN != '' }}
+          enablement: ${{ steps.pages-token.outputs.present == 'true' }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
