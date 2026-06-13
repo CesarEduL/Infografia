@@ -78,9 +78,9 @@ Animaciones y timeline centralizados para todas las infografías. El navegador l
 <body>
   <!-- HTML con .tl-wrap, #yearsRow, #periodsRow (.tl-columns) -->
   <script src="../shared/motion.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" defer></script>
-  <script src="../shared/d3-motion.js" defer></script>
-  <script defer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="../shared/d3-motion.js"></script>
+  <script>
     const eras = [/* { name, years, subYears, … } */];
 
     const timeline = InfografiaMotion.createTimeline({

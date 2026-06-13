@@ -11,7 +11,9 @@
   const ERA_DUR = 680;
   const ERA_STAGGER = 55;
   const eraEase = d3.easeCubicInOut;
-  const eraSpring = d3.easeBackOut.overshoot(1.15);
+  const eraSpring = typeof d3.easeBackOut.overshoot === 'function'
+    ? d3.easeBackOut.overshoot(1.15)
+    : d3.easeBackOut;
 
   function eraTransition(animate, delay) {
     delay = delay || 0;
@@ -44,4 +46,4 @@
     eraSpringTransition,
     interruptLayers,
   };
-})(window);
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -19,7 +19,9 @@ Infografia/
 ├── shared/                 # CSS y JS de animaciones compartidos
 │   ├── motion.css
 │   ├── motion.js
-│   └── d3-motion.js
+│   ├── d3-motion.js
+│   ├── perf.js
+│   └── PERFORMANCE.md
 ├── algarrobo/
 │   └── index.html          # → /algarrobo
 └── otrainfografia/         # (ejemplo futuro)
@@ -35,6 +37,7 @@ Cada carpeta con `index.html` genera una ruta: `/Infografia/nombre-carpeta/`.
 | [GITHUB_PAGES.md](GITHUB_PAGES.md) | **Guía completa:** activar Pages, desplegar, URLs, troubleshooting |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo crear y añadir infografías |
 | [DEPLOY.md](DEPLOY.md) | Referencia técnica: secrets, workflow, errores |
+| [shared/PERFORMANCE.md](shared/PERFORMANCE.md) | Perfil de rendimiento y optimización de animaciones |
 
 ## Inicio rápido
 

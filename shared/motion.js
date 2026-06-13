@@ -46,13 +46,12 @@
   function flashMapArea(mapAreaId) {
     const el = $(mapAreaId || 'mapArea');
     if (!el) return;
-    el.classList.add('motion-target', 'motion-will-change-filter');
+    el.classList.add('motion-target');
     el.classList.remove('era-pulse');
     reflow(el);
     el.classList.add('era-pulse');
-    el.addEventListener('animationend', () => {
-      el.classList.remove('era-pulse', 'motion-will-change-filter');
-    }, { once: true });
+    clearTimeout(el._pulseT);
+    el._pulseT = setTimeout(() => el.classList.remove('era-pulse'), 900);
   }
 
   function animateSidebarStats(era, ids) {
@@ -238,6 +237,7 @@
 
     function updateTL() {
       if (!timelineReady) { build(); return; }
+      if (global.InfografiaPerf?.isEnabled?.()) global.InfografiaPerf.start('timeline-update');
       document.querySelectorAll('.tl-dot').forEach((d, i) => {
         const on = i === activeEra;
         d.classList.toggle('active', on);
@@ -254,6 +254,10 @@
         s.style.setProperty('--seg-delay', on ? (i * ERA_SEG_STAGGER) + 'ms' : '0ms');
       });
       updateYearMarks(true);
+      if (global.InfografiaPerf?.isEnabled?.()) {
+        global.InfografiaPerf.end('timeline-update');
+        global.InfografiaPerf.report();
+      }
     }
 
     function build() {

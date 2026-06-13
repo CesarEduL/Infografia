@@ -36,7 +36,7 @@
 .tl-dot.active::after {
   content: ''; position: absolute; inset: -5px; border-radius: 50%;
   border: 1px solid rgba(210, 210, 210, 0.4);
-  animation: dotRing 1.4s var(--ease-out-soft) infinite;
+  animation: dotRing 1.4s var(--ease-out-soft) 2;
   pointer-events: none;
 }
 .tl-dot.dot-bump { animation: dotBump .6s var(--ease-spring); }
@@ -56,9 +56,9 @@
 .tl-era {
   cursor: pointer; padding: 0 3px; min-width: 0;
   opacity: .42;
-  transition: opacity .55s var(--ease-fluid), transform .6s var(--ease-spring), filter .5s;
+  transition: opacity .55s var(--ease-fluid), transform .6s var(--ease-spring);
 }
-.tl-era.active { opacity: 1; transform: translateY(-2px); filter: brightness(1.08); }
+.tl-era.active { opacity: 1; transform: translateY(-2px); }
 
 .tl-era-name {
   font-size: 9px; color: #555; letter-spacing: 0.06em; text-transform: uppercase;
@@ -111,10 +111,9 @@
   position: absolute; left: 0; top: 0;
   font-size: 9px; color: #999; letter-spacing: 0.05em;
   white-space: nowrap; font-weight: 500;
-  transition: transform .6s var(--ease-out-soft), opacity .5s var(--ease-fluid),
-              color .4s;
-  will-change: transform, opacity;
+  transition: transform .6s var(--ease-out-soft), opacity .5s var(--ease-fluid), color .4s;
 }
+.tl-year-mark.motion-will-change { will-change: transform, opacity; }
 .tl-year-mark.tl-year-enter { opacity: 0; }
 .tl-year-mark.tl-year-enter.anchor-left { transform: translate3d(var(--year-x, 0), 8px, 0) scale(.92); }
 .tl-year-mark.tl-year-enter.anchor-center { transform: translate3d(var(--year-x, 0), 8px, 0) scale(.92); }
@@ -150,8 +149,19 @@
 .mobile-era-year.stat-in, .mobile-era-note.stat-in { animation: statIn .4s ease forwards; }
 
 /* ── Mapa ── */
-.map-area.motion-target { transition: filter .5s var(--ease-fluid); }
-.map-area.era-pulse { animation: mapPulse .85s var(--ease-out-soft); }
+.map-area { position: relative; contain: layout style; }
+.map-area.motion-target::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.07);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.map-area.era-pulse::after {
+  animation: mapPulseOverlay .85s var(--ease-out-soft);
+}
 
 /* will-change temporal durante animaciones */
 .motion-will-change { will-change: transform, opacity; }
@@ -193,11 +203,16 @@
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes mapPulse {
-  0% { filter: brightness(1) saturate(1); }
-  30% { filter: brightness(1.18) saturate(1.1); }
-  100% { filter: brightness(1) saturate(1); }
+@keyframes mapPulseOverlay {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
 }
+
+/* Modo ligero: sin blur SVG pesado (activar con class perf-lite en body) */
+.perf-lite .region-glow { display: none; }
+.perf-lite .route-line { filter: none !important; }
+.perf-lite .era-glow { filter: none !important; }
 
 /* ── Móvil: overrides de timeline ── */
 @media (max-width: 768px) {

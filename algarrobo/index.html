@@ -29,6 +29,7 @@
 .close-btn{margin-left:auto;color:#555;cursor:pointer;font-size:13px;padding:0 4px;z-index:1}
 .lh-body{flex:1;display:flex;overflow:hidden;min-height:0;min-width:0}
 .map-area{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+#routesG,#markersG{will-change:opacity}
 .map-area:active{cursor:grabbing}
 #mapSvg{width:100%;height:100%;display:block}
 .zoom-btns{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:15}
@@ -325,11 +326,21 @@
   </div>
 </div>
 
+<script src="../shared/perf.js"></script>
 <script src="../shared/motion.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" defer></script>
-<script src="../shared/d3-motion.js" defer></script>
-<script defer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="../shared/d3-motion.js"></script>
+<script>
+(function boot(){
+  function showBootError(msg){
+    console.error('[algarrobo]', msg);
+    const area=document.getElementById('mapArea');
+    if(area)area.innerHTML='<div style="color:#c66;padding:20px;font-size:12px">'+msg+'</div>';
+  }
+  if(typeof d3==='undefined'){showBootError('Error: D3 no cargó. Revisa la conexión.');return;}
+  if(typeof InfografiaMotion==='undefined'){showBootError('Error: motion.js no cargó.');return;}
+  if(typeof InfografiaD3Motion==='undefined'){showBootError('Error: d3-motion.js no cargó.');return;}
 const regionData={
   'Piura':        {level:5,loss:'252 179 ha (2010–2024)',rate:'13 000–17 000 ha/año',status:'CRÍTICO', color:'#7a1008',hov:'#a01810',note:'Especie clasificada "Vulnerable" (D.S. 043-2006-AG). SERFOR decomisó 3 500 unidades de leña ilegal en enero 2025. Reforestación <1 000 ha/año.'},
   'Tumbes':       {level:4,loss:'Afectado',rate:'—',      status:'CRÍTICO', color:'#6a1408',hov:'#8a2010',note:'Punto de entrada de productos forestales desde Ecuador. "Los productos vienen de Ecuador en su mayoría y también salen de Perú" (SERFOR).'},
@@ -409,7 +420,9 @@ const eras=[
 
 let activeEra=-1,allFeatures=[],geoProj=null,currentTransform=d3.zoomIdentity;
 let mapReady=false,mapW=0,mapH=0,geoPath=null;
-const {eraTransition,eraSpringTransition,ERA_STAGGER,interruptLayers}=InfografiaD3Motion;
+let glowFeatureMap=null,eraLayerGen=0;
+const GLOW_REGIONS=['Piura','Tumbes','Lambayeque','La Libertad','Cajamarca','Ancash','Amazonas'];
+const ERA_STAGGER=InfografiaD3Motion.ERA_STAGGER;
 const svgEl=document.getElementById('mapSvg');
 const svg=d3.select(svgEl);
 const mapTip=document.getElementById('mapTip');
@@ -425,6 +438,16 @@ document.getElementById('zoomReset').onclick=()=>svg.transition().duration(400).
 
 function getW(){return document.getElementById('mapArea').clientWidth;}
 function getH(){return document.getElementById('mapArea').clientHeight;}
+function buildGlowFeatureMap(){
+  glowFeatureMap=new Map();
+  GLOW_REGIONS.forEach(rn=>{
+    const f=allFeatures.find(f=>nameMatch(f.properties)===rn);
+    if(f)glowFeatureMap.set(rn,f);
+  });
+}
+function getRouteLineGen(){
+  return d3.line().x(d=>geoProj([d[0],d[1]])[0]).y(d=>geoProj([d[0],d[1]])[1]).curve(d3.curveCatmullRom.alpha(0.5));
+}
 function normName(s){return s.toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/\s+/g,'');}
 function nameMatch(props){
   if(!props)return null;
@@ -521,7 +544,7 @@ function renderFull(W,H){
   allFeatures.forEach((f,i)=>{
     const rk=nameMatch(f.properties),rd=rk?regionData[rk]:null;
     if(!rd||rd.level<2)return;
-    gMain.append('path').datum(f).attr('d',path).attr('fill',rd.hov).attr('opacity',0.3+rd.level*0.06).attr('filter','url(#bl'+i+')').style('pointer-events','none');
+    gMain.append('path').datum(f).attr('class','region-glow').attr('d',path).attr('fill',rd.hov).attr('opacity',0.3+rd.level*0.06).attr('filter','url(#bl'+i+')').style('pointer-events','none');
   });
   allFeatures.forEach(f=>{
     const rk=nameMatch(f.properties),rd=rk?regionData[rk]:defaultRegion;
@@ -565,17 +588,22 @@ function eraTransition(animate,delay=0){
 function eraSpringTransition(animate,delay=0){
   return InfografiaD3Motion.eraSpringTransition(animate,delay);
 }
+function interruptLayers(sel){
+  InfografiaD3Motion.interruptLayers(sel);
+}
 function renderEraLayers(animate){
   if(!geoPath||!allFeatures.length)return;
   interruptLayers(svg);
+  const perfOn=typeof InfografiaPerf!=='undefined'&&InfografiaPerf.isEnabled();
+  if(perfOn)InfografiaPerf.start('era-layers');
+  const gen=++eraLayerGen;
   const path=geoPath;
   const era=activeEra>=0?eras[activeEra]:null;
   const t=eraTransition(animate);
   const tSpring=eraSpringTransition(animate);
-  const glowRegions=['Piura','Tumbes','Lambayeque','La Libertad','Cajamarca','Ancash','Amazonas'];
 
-  const glowData=(era&&era.bColor)?glowRegions.map(rn=>{
-    const f=allFeatures.find(f=>nameMatch(f.properties)===rn);
+  const glowData=(era&&era.bColor&&glowFeatureMap)?GLOW_REGIONS.map(rn=>{
+    const f=glowFeatureMap.get(rn);
     return f?{rn,f,color:era.bColor}:null;
   }).filter(Boolean):[];
   const gMain=svg.select('#zoomG');
@@ -591,16 +619,18 @@ function renderEraLayers(animate){
 
   const gRoutes=svg.select('#routesG');
   const gMarkers=svg.select('#markersG');
+  const finishPerf=()=>{if(perfOn){InfografiaPerf.end('era-layers');InfografiaPerf.report();}};
   const afterFade=()=>{
+    if(gen!==eraLayerGen)return;
     gRoutes.selectAll('*').remove();gMarkers.selectAll('*').remove();
     gRoutes.style('opacity',1);gMarkers.style('opacity',1);
     if(era&&era.showRoutes){
-      const lineGen=d3.line().x(d=>geoProj([d[0],d[1]])[0]).y(d=>geoProj([d[0],d[1]])[1]).curve(d3.curveCatmullRom.alpha(0.5));
+      const lineGen=getRouteLineGen();
       smugglingRoutes.forEach((r,ri)=>{
         const aid=r.arrow==='arrowRed'?'url(#arrowRed)':r.arrow==='arrowTeal'?'url(#arrowTeal)':'url(#arrowCyan)';
         const rp=gRoutes.append('path').attr('class','route-line').attr('d',lineGen(r.points)).attr('fill','none').attr('stroke',r.color)
           .attr('stroke-width',1.2).attr('stroke-dasharray','5,3').attr('marker-end',aid)
-          .attr('filter','url(#glow)').style('pointer-events','none').style('opacity',0);
+          .style('pointer-events','none').style('opacity',0);
         if(animate){
           const len=rp.node().getTotalLength();
           rp.attr('stroke-dasharray',len).attr('stroke-dashoffset',len)
@@ -613,7 +643,7 @@ function renderEraLayers(animate){
         const [x,y]=xy;
         const halo=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',0).attr('fill',n.color).attr('opacity',0.15).style('pointer-events','none');
         const dot=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',0).attr('fill',n.color)
-          .attr('filter','url(#glow)').style('cursor','pointer').style('opacity',0);
+          .style('cursor','pointer').style('opacity',0);
         const tipHtml=`<b style="color:#80deea">${n.label}</b>${n.sub}`;
         function showNodeTip(e){d3.select(dot.node()).attr('r',5).attr('opacity',1);showMapTip(tipHtml,e);}
         function hideNodeTip(){d3.select(dot.node()).attr('r',3).attr('opacity',0.9);hideMapTip();}
@@ -630,7 +660,7 @@ function renderEraLayers(animate){
         const [mx,my]=xy;
         const col=iconColor[ev.icon]||'#e03020';
         const star=gMarkers.append('path').attr('d',starPath(mx,my,5,2.2,8)).attr('fill',col)
-          .attr('filter','url(#glow)').style('cursor','pointer').style('opacity',0)
+          .style('cursor','pointer').style('opacity',0)
           .attr('transform',`translate(${mx},${my}) scale(0) translate(${-mx},${-my})`);
         const evTip=`<b style="color:#ddd">${ev.label}</b>`;
         function showEvTip(e){d3.select(star.node()).attr('transform',`translate(${mx},${my}) scale(1.4) translate(${-mx},${-my})`);showMapTip(evTip,e);}
@@ -642,6 +672,7 @@ function renderEraLayers(animate){
             .attr('transform',`translate(${mx},${my}) scale(1) translate(${-mx},${-my})`);
       });
     }
+    finishPerf();
   };
   if(animate){
     let pending=2;
@@ -652,6 +683,7 @@ function renderEraLayers(animate){
 }
 
 function handleEraSelect(i){
+  if(typeof InfografiaPerf!=='undefined'&&InfografiaPerf.isEnabled())InfografiaPerf.start('era-transition');
   activeEra=i;
   setStatsOpen(false);
   InfografiaMotion.animateSidebarStats(eras[i]);
@@ -660,6 +692,10 @@ function handleEraSelect(i){
   InfografiaMotion.pulseTimeline();
   InfografiaMotion.flashMapArea();
   if(allFeatures.length)render(true);
+  if(typeof InfografiaPerf!=='undefined'&&InfografiaPerf.isEnabled()){
+    InfografiaPerf.end('era-transition');
+    InfografiaPerf.report();
+  }
 }
 function handleEraDeselect(){
   activeEra=-1;
@@ -701,6 +737,8 @@ if(tlScrollEl){
 d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
   const key=Object.keys(topo.objects)[0];
   allFeatures=topojson.feature(topo,topo.objects[key]).features;
+  buildGlowFeatureMap();
+  if(InfografiaMotion.isMobile())document.body.classList.add('perf-lite');
   render();
   buildLegendStars();
   window.addEventListener('resize',()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);mapW=0;render();timeline.layoutYearMarks();});
@@ -708,6 +746,7 @@ d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json'
 }).catch(()=>{document.getElementById('mapArea').innerHTML='<div style="color:#666;padding:20px">Error cargando mapa</div>';});
 
 timeline.build();
+})(); // boot
 </script>
 </body>
 </html>
