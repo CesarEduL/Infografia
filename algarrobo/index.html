@@ -29,7 +29,7 @@
 .close-btn{margin-left:auto;color:#555;cursor:pointer;font-size:13px;padding:0 4px;z-index:1}
 .lh-body{flex:1;display:flex;overflow:hidden;min-height:0;min-width:0}
 .map-area{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
-#routesG,#markersG{will-change:opacity}
+#routesG,#interactiveG{will-change:opacity}
 .map-area:active{cursor:grabbing}
 #mapSvg{width:100%;height:100%;display:block}
 .zoom-btns{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:15}
@@ -50,6 +50,7 @@
 .tooltip-box{position:absolute;background:rgba(4,4,4,0.95);border:1px solid #333;padding:9px 11px;max-width:210px;font-size:10px;color:#bbb;line-height:1.6;pointer-events:none;z-index:20;display:none;bottom:108px;left:12px}
 .tooltip-box::after{content:'';position:absolute;bottom:-7px;left:18px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #333}
 .tip-year{font-size:12px;color:#fff;font-weight:600;margin-bottom:4px}
+.tooltip-box #tipBody .tip-status{font-size:9px;letter-spacing:0.09em;font-weight:600}
 .tl-wrap{border-top:1px solid #222;background:#060606;padding:8px 14px 10px;flex-shrink:0;min-width:0;width:100%}
 .mobile-era-bar{display:none}
 .stats-toggle{display:none}
@@ -91,6 +92,18 @@
   }
   .close-btn{display:none}
   .lh-title{max-width:calc(100% - 40px)}
+  .tooltip-box{
+    max-width:min(440px,48vw);
+    padding:16px 20px;
+    font-size:13px;
+    line-height:1.7;
+    bottom:124px;
+    left:18px;
+    border-radius:4px
+  }
+  .tip-year{font-size:18px;margin-bottom:10px;letter-spacing:0.03em}
+  .tooltip-box #tipBody .tip-status{font-size:12px;letter-spacing:0.09em;font-weight:600}
+  .tooltip-box #tipBody strong{font-size:15px;font-weight:600;color:#ddd}
 }
 @media (max-width: 768px) {
   body{padding:0;padding-top:env(safe-area-inset-top);padding-bottom:0;overflow:hidden}
@@ -446,7 +459,7 @@ const mapTip=document.getElementById('mapTip');
 
 const zoom=d3.zoom().scaleExtent([1,12]).on('zoom',e=>{
   currentTransform=e.transform;
-  ['#zoomG','#routesG','#markersG','#labelsG'].forEach(id=>svg.select(id).attr('transform',e.transform));
+  ['#zoomG','#routesG','#labelsG','#interactiveG'].forEach(id=>svg.select(id).attr('transform',e.transform));
 });
 svg.call(zoom);
 document.getElementById('zoomIn').onclick =()=>svg.transition().duration(300).call(zoom.scaleBy,1.8);
@@ -466,10 +479,15 @@ function getRouteLineGen(){
   return d3.line().x(d=>geoProj([d[0],d[1]])[0]).y(d=>geoProj([d[0],d[1]])[1]).curve(d3.curveCatmullRom.alpha(0.5));
 }
 function normName(s){return s.toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/\s+/g,'');}
+const regionAliases={limaprovince:'Lima'};
 function nameMatch(props){
   if(!props)return null;
   const n=normName(props.NAME_1||props.name||props.NAME||'');
-  for(const k of Object.keys(regionData))if(n.includes(normName(k).substring(0,5)))return k;
+  if(!n)return null;
+  if(regionAliases[n])return regionAliases[n];
+  for(const k of Object.keys(regionData)){
+    if(n===normName(k))return k;
+  }
   return null;
 }
 function starPath(cx,cy,r,ir,pts){
@@ -499,21 +517,94 @@ function highlightRegion(rk,rd,on){
   const lbl=svg.select(`#lbl-${rk.replace(/\s/g,'_')}`);
   if(!lbl.empty())lbl.attr('fill',on?'#ffffff':labelDefaultColor(rd));
 }
-function onRegionOver(rk,rd,e){
+let hoveredRk=null,clearRegionTimer=null,hoverFeatures=[],geoHoverBound=false,geoHoverRaf=null;
+function rebuildHoverFeatures(){
+  hoverFeatures=allFeatures.reduce((acc,f)=>{
+    const rk=nameMatch(f.properties);
+    const rd=rk?regionData[rk]:defaultRegion;
+    if(rd.note)acc.push({rk,f,rd});
+    return acc;
+  },[]);
+}
+function lonLatAtPointer(e){
+  if(!geoProj)return null;
+  const pt=currentTransform.invert(d3.pointer(e,svg.node()));
+  const lonlat=geoProj.invert(pt);
+  return lonlat&&!isNaN(lonlat[0])?lonlat:null;
+}
+function regionAtPointer(e){
+  const lonlat=lonLatAtPointer(e);
+  if(!lonlat)return null;
+  for(const {rk,f} of hoverFeatures){
+    if(d3.geoContains(f,lonlat))return rk;
+  }
+  return null;
+}
+function hideRegionTipInstant(){
+  const tip=document.getElementById('tipBox');
+  if(!tip)return;
+  tip.classList.remove('tip-in','tip-out','motion-will-change');
+  tip.style.display='none';
+}
+function onRegionOver(rk,rd){
   if(!rd.note)return;
+  if(clearRegionTimer){clearTimeout(clearRegionTimer);clearRegionTimer=null;}
+  if(hoveredRk===rk){
+    const tip=document.getElementById('tipBox');
+    if(tip.style.display==='none')showRegionTip(rk,rd);
+    return;
+  }
+  if(hoveredRk&&regionData[hoveredRk])highlightRegion(hoveredRk,regionData[hoveredRk],false);
+  hoveredRk=rk;
   highlightRegion(rk,rd,true);
   showRegionTip(rk,rd);
 }
 function onRegionOut(rk,rd){
   if(!rd.note)return;
-  highlightRegion(rk,rd,false);
-  if(activeEra>=0)InfografiaMotion.showEraTip(eras[activeEra],false);else InfografiaMotion.clearTip();
+  if(clearRegionTimer)clearTimeout(clearRegionTimer);
+  clearRegionTimer=setTimeout(()=>{
+    clearRegionTimer=null;
+    if(hoveredRk!==rk)return;
+    hoveredRk=null;
+    highlightRegion(rk,rd,false);
+    if(activeEra>=0)InfografiaMotion.showEraTip(eras[activeEra],false);else hideRegionTipInstant();
+  },100);
+}
+function processGeoHover(e){
+  const rk=regionAtPointer(e);
+  if(rk){
+    const rd=regionData[rk];
+    if(rd)onRegionOver(rk,rd);
+  }else if(hoveredRk){
+    const rd=regionData[hoveredRk];
+    if(rd)onRegionOut(hoveredRk,rd);
+  }
+}
+function setupGeoHover(){
+  if(geoHoverBound)return;
+  geoHoverBound=true;
+  const mapAreaEl=document.getElementById('mapArea');
+  mapAreaEl.addEventListener('pointermove',e=>{
+    if(geoHoverRaf)return;
+    geoHoverRaf=requestAnimationFrame(()=>{
+      geoHoverRaf=null;
+      processGeoHover(e);
+    });
+  });
+  mapAreaEl.addEventListener('pointerleave',()=>{
+    if(hoveredRk){
+      const rk=hoveredRk,rd=regionData[rk];
+      if(rd)onRegionOut(rk,rd);
+    }
+  });
 }
 function showRegionTip(rk,rd){
   const sc={CRÍTICO:'#e07060',GRAVE:'#d0a040',SEVERO:'#90aa50',AMAZÓNICO:'#60aa80',TRÁFICO:'#8080cc',DESTINO:'#9090cc'}[rd.status]||'#aaa';
-  const tip=document.getElementById('tipBox');tip.style.display='block';
+  const tip=document.getElementById('tipBox');
+  tip.classList.remove('tip-out','motion-will-change');
+  tip.style.display='block';
   document.getElementById('tipTitle').textContent=rk||'';
-  document.getElementById('tipBody').innerHTML=`<span style="color:${sc};font-size:9px;letter-spacing:0.09em;font-weight:600">${rd.status}</span><br>${rd.loss!=='—'?'<strong style="color:#ddd">'+rd.loss+'</strong><br>':''}${rd.rate!=='—'?rd.rate+'<br>':''}${rd.note}`;
+  document.getElementById('tipBody').innerHTML=`<span class="tip-status" style="color:${sc}">${rd.status}</span><br>${rd.loss!=='—'?'<strong>'+rd.loss+'</strong><br>':''}${rd.rate!=='—'?rd.rate+'<br>':''}${rd.note}`;
 }
 
 // Dibujar estrellas en leyenda HTML
@@ -565,16 +656,14 @@ function renderFull(W,H){
   });
   allFeatures.forEach(f=>{
     const rk=nameMatch(f.properties),rd=rk?regionData[rk]:defaultRegion;
-    gMain.append('path').datum(f).attr('class','region-path').attr('d',path).attr('fill',rd.color).attr('stroke','#1a1a1a').attr('stroke-width',0.4)
-      .style('cursor',rd.note?'pointer':'default')
-      .on('mouseenter',function(e){onRegionOver(rk,rd,e);})
-      .on('mouseleave',function(){onRegionOut(rk,rd);})
-      .on('click',function(e){
-        if(!rd.note)return;
-        e.stopPropagation();
-        onRegionOver(rk,rd,e);
-      });
+    gMain.append('path').datum(f).attr('class','region-path').attr('d',path).attr('fill',rd.color).attr('stroke','transparent').attr('stroke-width',12)
+      .style('pointer-events','none');
   });
+  allFeatures.forEach(f=>{
+    gMain.append('path').datum(f).attr('class','region-border').attr('d',path).attr('fill','none').attr('stroke','#1a1a1a').attr('stroke-width',0.4).style('pointer-events','none');
+  });
+
+  svg.append('g').attr('id','routesG').attr('transform',currentTransform).style('pointer-events','none');
 
   const gLabels=svg.append('g').attr('id','labelsG').attr('transform',currentTransform);
   allFeatures.forEach(f=>{
@@ -595,8 +684,8 @@ function renderFull(W,H){
       .text(fullName);
   });
 
-  svg.append('g').attr('id','routesG').attr('transform',currentTransform);
-  svg.append('g').attr('id','markersG').attr('transform',currentTransform);
+  svg.append('g').attr('id','interactiveG').attr('transform',currentTransform);
+
   renderEraLayers(false);
 }
 function eraTransition(animate,delay=0){
@@ -635,12 +724,12 @@ function renderEraLayers(animate){
     .transition(t).style('opacity',1).attr('stroke-width',1.3);
 
   const gRoutes=svg.select('#routesG');
-  const gMarkers=svg.select('#markersG');
+  const gInteractive=svg.select('#interactiveG');
   const finishPerf=()=>{if(perfOn){InfografiaPerf.end('era-layers');InfografiaPerf.report();}};
   const afterFade=()=>{
     if(gen!==eraLayerGen)return;
-    gRoutes.selectAll('*').remove();gMarkers.selectAll('*').remove();
-    gRoutes.style('opacity',1);gMarkers.style('opacity',1);
+    gRoutes.selectAll('*').remove();gInteractive.selectAll('*').remove();
+    gRoutes.style('opacity',1);
     if(era&&era.showRoutes){
       const lineGen=getRouteLineGen();
       smugglingRoutes.forEach((r,ri)=>{
@@ -659,8 +748,8 @@ function renderEraLayers(animate){
         const xy=geoProj([n.lon,n.lat]);if(!xy)return;
         const [x,y]=xy;
         const halo=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',0).attr('fill',n.color).attr('opacity',0.15).style('pointer-events','none');
-        const dot=gRoutes.append('circle').attr('cx',x).attr('cy',y).attr('r',0).attr('fill',n.color)
-          .style('cursor','pointer').style('opacity',0);
+        const dot=gInteractive.append('circle').attr('class','route-node').attr('cx',x).attr('cy',y).attr('r',0).attr('fill',n.color)
+          .style('cursor','pointer').style('opacity',0).style('pointer-events','all');
         const tipHtml=`<b style="color:#80deea">${n.label}</b>${n.sub}`;
         function showNodeTip(e){d3.select(dot.node()).attr('r',5).attr('opacity',1);showMapTip(tipHtml,e);}
         function hideNodeTip(){d3.select(dot.node()).attr('r',3).attr('opacity',0.9);hideMapTip();}
@@ -676,8 +765,8 @@ function renderEraLayers(animate){
         const xy=geoProj([ev.lon,ev.lat]);if(!xy)return;
         const [mx,my]=xy;
         const col=iconColor[ev.icon]||'#e03020';
-        const star=gMarkers.append('path').attr('d',starPath(mx,my,5,2.2,8)).attr('fill',col)
-          .style('cursor','pointer').style('opacity',0)
+        const star=gInteractive.append('path').attr('class','era-star').attr('d',starPath(mx,my,5,2.2,8)).attr('fill',col)
+          .style('cursor','pointer').style('opacity',0).style('pointer-events','all')
           .attr('transform',`translate(${mx},${my}) scale(0) translate(${-mx},${-my})`);
         const evTip=`<b style="color:#ddd">${ev.label}</b>`;
         function showEvTip(e){d3.select(star.node()).attr('transform',`translate(${mx},${my}) scale(1.4) translate(${-mx},${-my})`);showMapTip(evTip,e);}
@@ -692,10 +781,9 @@ function renderEraLayers(animate){
     finishPerf();
   };
   if(animate){
-    let pending=2;
+    let pending=1;
     const done=()=>{if(--pending===0)afterFade();};
     gRoutes.transition(t).style('opacity',0).on('end',done);
-    gMarkers.transition(t).style('opacity',0).on('end',done);
   }else afterFade();
 }
 
@@ -755,8 +843,10 @@ d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json'
   const key=Object.keys(topo.objects)[0];
   allFeatures=topojson.feature(topo,topo.objects[key]).features;
   buildGlowFeatureMap();
+  rebuildHoverFeatures();
   if(InfografiaMotion.isMobile())document.body.classList.add('perf-lite');
   render();
+  setupGeoHover();
   buildLegendStars();
   window.addEventListener('resize',()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);mapW=0;render();timeline.layoutYearMarks();});
   window.addEventListener('orientationchange',()=>{setTimeout(()=>{currentTransform=d3.zoomIdentity;svg.call(zoom.transform,d3.zoomIdentity);mapW=0;render();timeline.layoutYearMarks();},200);});

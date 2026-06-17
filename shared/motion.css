@@ -55,28 +55,24 @@
 
 .tl-era {
   cursor: pointer; padding: 0 3px; min-width: 0;
-  opacity: .42;
-  transition: opacity .55s var(--ease-fluid), transform .6s var(--ease-spring);
+  opacity: .42; overflow: hidden;
+  transition: opacity .55s var(--ease-fluid);
 }
-.tl-era.active { opacity: 1; transform: translateY(-2px); }
+.tl-era.active { opacity: 1; }
 
 .tl-era-name {
   font-size: 9px; color: #555; letter-spacing: 0.06em; text-transform: uppercase;
   line-height: 1.2; font-weight: 500;
-  transition: color .5s var(--ease-fluid), letter-spacing .5s;
+  transition: color .5s var(--ease-fluid);
+  overflow: hidden; text-overflow: ellipsis;
 }
-.tl-era.active .tl-era-name {
-  color: #ddd; font-weight: 600;
-  animation: eraNamePop .65s var(--ease-spring);
-}
+.tl-era.active .tl-era-name { color: #ddd; font-weight: 600; }
 .tl-era-years {
   font-size: 8px; color: #444; letter-spacing: 0.04em; margin-top: 1px;
   transition: color .5s var(--ease-fluid), opacity .5s;
+  white-space: nowrap;
 }
-.tl-era.active .tl-era-years {
-  color: #888;
-  animation: eraYearsIn .6s var(--ease-fluid) .05s both;
-}
+.tl-era.active .tl-era-years { color: #888; }
 .tl-era:hover .tl-era-name { color: #aaa; }
 .tl-era:hover .tl-era-years { color: #666; }
 
@@ -101,7 +97,7 @@
 }
 
 .tl-years-row {
-  position: relative; height: 16px; margin-bottom: 4px; overflow: visible;
+  position: relative; height: 16px; margin-bottom: 4px; overflow: hidden;
   contain: layout style;
   transition: opacity .4s var(--ease-fluid), transform .4s var(--ease-fluid);
 }
@@ -178,14 +174,6 @@
   45% { transform: scale(1.9); }
   100% { transform: scale(1.5); }
 }
-@keyframes eraNamePop {
-  0% { letter-spacing: 0.02em; opacity: .4; transform: translateY(2px); }
-  100% { letter-spacing: 0.06em; opacity: 1; transform: translateY(0); }
-}
-@keyframes eraYearsIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 @keyframes tlWrapGlow {
   0% { background: #060606; }
   35% { background: #0c0c0c; }
@@ -213,6 +201,33 @@
 .perf-lite .region-glow { display: none; }
 .perf-lite .route-line { filter: none !important; }
 .perf-lite .era-glow { filter: none !important; }
+
+/* ── Desktop: timeline a ancho completo ── */
+@media (min-width: 769px) {
+  .tl-scroll { overflow-x: hidden; }
+  .tl-inner { width: 100%; }
+  .tl-columns {
+    position: relative;
+    width: 100%;
+  }
+  .tl-columns::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    right: 0;
+    top: 7px;
+    height: 1px;
+    background: #2a2a2a;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .tl-dot-track { position: relative; z-index: 1; }
+  .tl-col:last-child .tl-seg-tail { flex: 1; min-width: 0; }
+  .tl-years-row { height: 18px; margin-bottom: 6px; }
+  .tl-year-mark { font-size: 10px; letter-spacing: 0.04em; }
+  .tl-era-name { white-space: nowrap; }
+  .stat-side-note { line-height: 1.55; }
+}
 
 /* ── Móvil: overrides de timeline ── */
 @media (max-width: 768px) {

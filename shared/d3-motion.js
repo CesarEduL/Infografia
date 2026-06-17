@@ -31,7 +31,7 @@
 
   /** Cancela transiciones en curso antes de iniciar una nueva era. */
   function interruptLayers(svg, layerIds) {
-    (layerIds || ['#routesG', '#markersG', '#zoomG']).forEach((id) => {
+    (layerIds || ['#routesG', '#interactiveG', '#zoomG']).forEach((id) => {
       const sel = svg.select(id);
       if (!sel.empty()) sel.interrupt();
     });

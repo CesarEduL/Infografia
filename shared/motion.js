@@ -62,29 +62,19 @@
     n.classList.remove('stat-in', 'motion-will-change');
     reflow(y);
     y.textContent = era.years;
-    n.textContent = era.note.substring(0, 90) + '…';
+    n.textContent = isMobile() && era.note.length > 90
+      ? era.note.substring(0, 90) + '…'
+      : era.note;
     y.classList.add('stat-in', 'motion-will-change');
     n.classList.add('stat-in', 'motion-will-change');
   }
 
   function showEraTip(era, animate, ids) {
-    if (isMobile()) {
-      const tip = $(ids?.tipBox || 'tipBox');
-      if (tip) tip.style.display = 'none';
-      return;
-    }
     const tip = $(ids?.tipBox || 'tipBox');
-    const title = $(ids?.tipTitle || 'tipTitle');
-    const body = $(ids?.tipBody || 'tipBody');
-    if (!tip || !era) return;
-    tip.style.display = 'block';
+    if (!tip) return;
+    // Desktop: la era se muestra en el sidebar; tipBox solo para hover de regiones
+    tip.style.display = 'none';
     tip.classList.remove('tip-in', 'tip-out', 'motion-will-change');
-    if (animate) {
-      reflow(tip);
-      tip.classList.add('tip-in', 'motion-will-change');
-    }
-    if (title) title.textContent = era.years;
-    if (body) body.textContent = era.note;
   }
 
   function clearTip(ids, defaults) {
@@ -163,24 +153,52 @@
       if (activeEra < 0) return;
       const yr = $(ids.yearsRow);
       const cols = document.querySelectorAll('.tl-col');
-      const eraEl = cols[activeEra]?.querySelector('.tl-era');
-      if (!yr || !eraEl) return;
+      const col = cols[activeEra];
+      const track = col?.querySelector('.tl-dot-track');
+      if (!yr || !track) return;
       const cr = $(ids.columnsRow);
-      if (cr) yr.style.width = cr.offsetWidth + 'px';
+      if (cr) yr.style.width = isMobile() ? cr.offsetWidth + 'px' : '100%';
       const rowLeft = yr.getBoundingClientRect().left;
-      const er = eraEl.getBoundingClientRect();
-      const relLeft = er.left - rowLeft;
+      const crWidth = cr ? cr.getBoundingClientRect().width : 0;
+      const tr = track.getBoundingClientRect();
+      const desktop = !isMobile();
+      const lastIdx = eras.length - 1;
+      let relLeft, spanWidth;
+
+      if (desktop && cr) {
+        const nextDotCenter = (idx) => {
+          const nt = cols[idx]?.querySelector('.tl-dot-track');
+          if (!nt) return null;
+          const nr = nt.getBoundingClientRect();
+          return nr.left + nr.width / 2 - rowLeft;
+        };
+        if (activeEra === 0) {
+          relLeft = 0;
+          spanWidth = lastIdx === 0 ? crWidth : (nextDotCenter(1) ?? crWidth);
+        } else if (activeEra === lastIdx) {
+          relLeft = tr.left - rowLeft;
+          spanWidth = crWidth - relLeft;
+        } else {
+          relLeft = tr.left - rowLeft;
+          const end = nextDotCenter(activeEra + 1);
+          spanWidth = end != null ? end - relLeft : tr.width;
+        }
+      } else {
+        relLeft = tr.left - rowLeft;
+        spanWidth = tr.width;
+      }
+
       const era = eras[activeEra];
       const n = era.subYears.length;
       const marks = yr.querySelectorAll('.tl-year-mark');
-      const inset = Math.max(2, n >= 4 ? 4 : 6);
+      const inset = Math.max(4, desktop ? 8 : (n >= 4 ? 4 : 6));
 
       era.subYears.forEach((_, i) => {
         const sp = marks[i];
         if (!sp) return;
         let x;
-        if (n === 1) x = relLeft + er.width / 2;
-        else x = relLeft + inset + (i / (n - 1)) * (er.width - 2 * inset);
+        if (n === 1) x = relLeft + spanWidth / 2;
+        else x = relLeft + inset + (i / (n - 1)) * (spanWidth - 2 * inset);
 
         const anchor = anchorClass(i, n);
         const anim = preserveAnim && (
@@ -249,7 +267,8 @@
       });
       document.querySelectorAll('.tl-era').forEach((e, i) => e.classList.toggle('active', i === activeEra));
       document.querySelectorAll('.tl-seg').forEach((s, i) => {
-        const on = activeEra > i;
+        const isTail = s.classList.contains('tl-seg-tail');
+        const on = isTail ? activeEra === eras.length - 1 : activeEra > i;
         s.classList.toggle('active', on);
         s.style.setProperty('--seg-delay', on ? (i * ERA_SEG_STAGGER) + 'ms' : '0ms');
       });
@@ -286,6 +305,10 @@
           const s = document.createElement('div');
           s.className = 'tl-seg';
           track.appendChild(s);
+        } else if (!isMobile()) {
+          const s = document.createElement('div');
+          s.className = 'tl-seg tl-seg-tail';
+          track.appendChild(s);
         }
         col.appendChild(track);
 
@@ -321,6 +344,9 @@
       updateTL();
       if (options.onSelect) options.onSelect(i, prev);
       scrollIntoView(i);
+      if (!isMobile()) {
+        requestAnimationFrame(() => requestAnimationFrame(() => layoutYearMarks(true)));
+      }
     }
 
     return {
