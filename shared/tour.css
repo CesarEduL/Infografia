@@ -1,0 +1,83 @@
+/* Infografia — tema oscuro para Driver.js */
+.infografia-tour-popover {
+  background: #0d0d0d !important;
+  color: #bbb !important;
+  border: 1px solid #333 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55) !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  max-width: min(320px, calc(100vw - 32px)) !important;
+}
+
+.infografia-tour-popover .driver-popover-title {
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.infografia-tour-popover .driver-popover-description {
+  color: #999 !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
+.infografia-tour-popover .driver-popover-progress-text {
+  color: #666 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.06em !important;
+}
+
+.infografia-tour-popover .driver-popover-footer button {
+  background: transparent !important;
+  border: 1px solid #333 !important;
+  border-radius: 3px !important;
+  color: #aaa !important;
+  font-size: 10px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  padding: 5px 10px !important;
+  text-shadow: none !important;
+  transition: color 0.2s, border-color 0.2s !important;
+}
+
+.infografia-tour-popover .driver-popover-footer button:hover,
+.infografia-tour-popover .driver-popover-footer button:focus {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: #555 !important;
+  color: #fff !important;
+}
+
+.infografia-tour-popover .driver-popover-next-btn,
+.infografia-tour-popover .driver-popover-done-btn {
+  background: rgba(109, 191, 135, 0.12) !important;
+  border-color: #3a5a40 !important;
+  color: #6dbf87 !important;
+}
+
+.infografia-tour-popover .driver-popover-next-btn:hover,
+.infografia-tour-popover .driver-popover-done-btn:hover {
+  background: rgba(109, 191, 135, 0.2) !important;
+  border-color: #4a7a50 !important;
+  color: #8ed4a4 !important;
+}
+
+.infografia-tour-popover .driver-popover-arrow {
+  border-color: #333 !important;
+}
+
+.infografia-tour-popover .driver-popover-arrow-side-left {
+  border-left-color: #0d0d0d !important;
+}
+
+.infografia-tour-popover .driver-popover-arrow-side-right {
+  border-right-color: #0d0d0d !important;
+}
+
+.infografia-tour-popover .driver-popover-arrow-side-top {
+  border-top-color: #0d0d0d !important;
+}
+
+.infografia-tour-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: #0d0d0d !important;
+}
